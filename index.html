@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Test-set comparison · 10-way aligned gallery</title>
+<meta name="description" content="Aligned qualitative comparison on the frozen 1522-prompt test set: OURS (AfterImage3D), BASE, Teacher-II and 7 external text-to-3D baselines. 8 views per method, identical sample / replicate / view indices.">
+<style>
+:root{--ink:#15202b;--muted:#64748b;--line:#d8e0e8;--bg:#f4f7fa;--accent:#115e59;--ours:#b42318;--warn:#b45309;--ext:#7c2d12}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+header{background:#102a43;color:#fff;padding:14px 20px}
+header h1{margin:0 0 4px;font-size:19px}
+header p{margin:0;color:#cfe3f3;font-size:12.5px;max-width:1100px}
+header a{color:#8fd3ff}
+.layout{display:grid;grid-template-columns:296px 1fr;align-items:start}
+aside{position:sticky;top:0;height:100vh;overflow:auto;background:#fff;border-right:1px solid var(--line);padding:12px}
+aside h2{margin:0 0 8px;font-size:14px;color:#334e68}
+aside input,aside select{width:100%;font:inherit;padding:7px 9px;border:1px solid #9fb0c0;border-radius:7px;margin-bottom:8px;background:#fff}
+#list{list-style:none;margin:0;padding:0;font-size:13px}
+#list li{padding:6px 8px;border-radius:6px;cursor:pointer;display:grid;grid-template-columns:52px 1fr;gap:6px;align-items:baseline}
+#list li:hover{background:#eef4f9}
+#list li.on{background:#e6fffa;font-weight:650}
+#list li .cid{font-variant-numeric:tabular-nums;color:#334e68}
+#list li .pp{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+main{padding:14px 18px 70px;min-width:0}
+.card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-bottom:12px}
+.head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between}
+.head h2{margin:0 0 4px;font-size:17px}
+.head .ids{color:var(--muted);font-size:12.5px}
+.prompt{margin:8px 0 0;font-size:17px;font-weight:600;line-height:1.35}
+.tags{margin-top:7px;font-size:12.5px;color:var(--muted)}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.ctrl button{font:inherit;font-size:13px;padding:6px 10px;border:1px solid #9fb0c0;border-radius:7px;background:#fff;cursor:pointer}
+.ctrl button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ctrl label{font-size:13px;color:var(--muted)}
+.mrow{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:#fff;overflow:hidden}
+.mhead{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:7px 11px;background:#f7fafc;border-bottom:1px solid var(--line);font-size:13.5px}
+.mhead .name{font-weight:650}
+.mhead .bid{color:var(--muted);font-size:12px}
+.badge{border-radius:99px;padding:1px 8px;font-size:11.5px;background:#e6fffa;color:#115e59}
+.badge.bad{background:#fee4e2;color:#912018}
+.badge.ours{background:#fee4e2;color:#912018;font-weight:700}
+.badge.ext{background:#fdece0;color:var(--ext)}
+.sheetwrap{padding:8px}
+.sheetwrap img{display:block;width:100%;height:auto;border-radius:7px;background:#fff;cursor:zoom-in;border:1px solid #eef2f6}
+.note{font-size:12.5px;color:var(--muted);line-height:1.65}
+.note b{color:var(--ink)}
+#lightbox{position:fixed;inset:0;background:#0b121999;display:none;align-items:center;justify-content:center;z-index:50;padding:24px}
+#lightbox.on{display:flex}
+#lightbox img{max-width:94vw;max-height:84vh;background:#fff;border-radius:8px}
+#lightbox .cap{position:absolute;bottom:14px;color:#fff;font-size:13px;background:#0009;padding:5px 12px;border-radius:99px}
+@media(max-width:1100px){.layout{grid-template-columns:1fr}aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Test-set comparison · 10-way aligned gallery</h1>
+  <p>Qualitative comparison on the frozen <b>1522-prompt</b> test set. Every row shows the <b>same sample</b>, the <b>same inference replicate (r0)</b> and the <b>same 8 view indices</b>, so cells align across methods. Rendered images only — no 3D models, no videos. <a href="https://qiu-yuchen.github.io/">← qiu-yuchen.github.io</a></p>
+</header>
+<div class="layout">
+<aside>
+  <h2>样本 Samples</h2>
+  <input id="q" placeholder="搜索 S 编号 / 提示词 / 原始 ID" autocomplete="off">
+  <select id="split"><option value="">全部划分</option></select>
+  <select id="cat"><option value="">全部分类</option></select>
+  <div style="font-size:12px;color:var(--muted);margin:4px 0 8px"><span id="shown">0</span> 条可选 · 已选 <b id="cur">–</b></div>
+  <ul id="list"></ul>
+</aside>
+<main>
+  <div id="loading" class="card">正在载入清单…</div>
+  <div id="app" style="display:none">
+    <section class="card">
+      <div class="head">
+        <div>
+          <h2 id="cid">–</h2>
+          <div class="ids" id="ids"></div>
+        </div>
+        <div style="text-align:right;font-size:12.5px;color:var(--muted)">
+          第 <b id="pos">1</b> / <span id="total">0</span> 条<br>
+          <button id="prev" style="margin-top:6px">← 上一条</button>
+          <button id="next">下一条 →</button>
+        </div>
+      </div>
+      <p class="prompt" id="prompt"></p>
+      <div class="tags" id="tags"></div>
+    </section>
+    <div class="ctrl">
+      <span style="font-size:13px;color:var(--muted)">方法筛选</span>
+      <button data-f="all" class="on">全部 10</button>
+      <button data-f="ours">仅 OURS + BASE</button>
+      <button data-f="ext">仅外部基线</button>
+      <label style="margin-left:8px"><input type="checkbox" id="onlyInvalid"> 只看含无效结果的方法</label>
+    </div>
+    <div id="rows"></div>
+    <section class="card note">
+      <b>读数口径：</b>本页是定性对照，不是数值结论。固定参考 <b>OURS-seed2027-step12000</b>，全部方法统一取 <b>replicate 0</b>（seed_000）。每行一张贴合图，含 <b>8 个视角</b>，每格上方已烧入视角号与角度：上排 <code>v00 0° · v01 30° · v03 90° · v04 120°</code>，下排 <code>v06 180° · v07 210° · v09 270° · v10 300°</code>。<br>
+      <b>样本范围：</b>10 个方法在 replicate 0 下均具备完整 12 视角的<b>交集</b>，共 <b>1522</b> 条；不满足的样本不出现在本页，也不用其它样本替代。同一行的样本编号、推理重复与视角索引逐格一致。<br>
+      <b>无效结果：</b>保持原状并逐行标注，不重抽、不填零，无效样本仍占自己的编号。<br>
+      <b>图像规格：</b>源图为 512×512 逐视角渲染；本页每视角下采样到 256×256 后拼成一张 1024×544 的 WebP（为便于公开托管而压缩）。所有数值结论一律基于原始未压缩渲染，不基于本页图像。<br>
+      <b>Hunyuan 列：</b>标注为 <i>Hunyuan3D-2 (FR40K accelerated)</i>，是明确采用的加速 Paint 配置，不等于原始标准 Paint。OURS 的旧 ULIP 仍处隔离范围，本页不涉及跨方法 ULIP 排名。
+    </section>
+  </div>
+</main>
+</div>
+<div id="lightbox"><img id="lbImg" alt=""><div class="cap" id="lbCap"></div></div>
+<script>
+"use strict";
+const MANIFEST="manifest.json";
+const VIEWS8=[0,1,3,4,6,7,9,10];
+let M=null,rows=[],idx=0,filter="all",onlyInvalid=false;
+const $=id=>document.getElementById(id);
+function imgUrl(method,cid){return `img/${method}/${cid}_r0.webp`}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function grp(m){return ["ours","base","teacher"].includes(m)?"cloud_native":"external"}
+function buildList(){
+  const q=$("q").value.trim().toLowerCase(),sp=$("split").value,ct=$("cat").value;
+  rows=M.samples.filter(s=>{
+    if(sp&&s.split!==sp)return false;
+    if(ct&&s.category!==ct)return false;
+    if(!q)return true;
+    return (s.case_id+" "+s.sample_id+" "+s.prompt).toLowerCase().includes(q);
+  });
+  const ul=$("list");ul.replaceChildren();
+  const frag=document.createDocumentFragment();
+  for(const s of rows){
+    const li=document.createElement("li");
+    li.innerHTML=`<span class="cid">${esc(s.case_id)}</span><span class="pp">${esc(s.prompt)}</span>`;
+    li.addEventListener("click",()=>{idx=rows.indexOf(s);render()});
+    frag.append(li);
+  }
+  ul.append(frag);
+  $("shown").textContent=String(rows.length);
+  if(rows.length&&!rows.includes(rows[idx]))idx=0;
+  paintSel();
+}
+function paintSel(){
+  const cur=rows[idx];
+  for(const li of $("list").children){li.classList.toggle("on",!!cur&&li.querySelector(".cid").textContent===cur.case_id)}
+  if(cur){$("cur").textContent=cur.case_id;const on=$("list").querySelector("li.on");if(on)on.scrollIntoView({block:"nearest"})}
+}
+function render(){
+  const s=rows[idx];if(!s)return;
+  $("cid").textContent=s.case_id;
+  $("ids").textContent=`原始 ID ${s.sample_id} · 推理重复 r0（seed_000）`;
+  $("prompt").textContent=s.prompt;
+  $("tags").textContent=`划分 ${s.split} · 分类 ${s.category} (${s.category_name})`;
+  $("pos").textContent=String(idx+1);$("total").textContent=String(rows.length);
+  const box=$("rows");box.replaceChildren();
+  for(const m of M.methods){
+    if(filter==="ours"&&!["ours","base"].includes(m.id))continue;
+    if(filter==="ext"&&["ours","base","teacher"].includes(m.id))continue;
+    const bad=(M.invalid[m.id]||[]).includes(s.case_id);
+    if(onlyInvalid&&!bad)continue;
+    const row=document.createElement("div");row.className="mrow";
+    const head=document.createElement("div");head.className="mhead";
+    head.innerHTML=`<span class="name">${esc(m.display)}</span>`
+      +(m.id==="ours"?`<span class="badge ours">固定参考</span>`:``)
+      +(grp(m.id)==="external"?`<span class="badge ext">外部基线</span>`:``)
+      +`<span class="badge${bad?" bad":""}">${bad?"无效":"有效"}</span>`
+      +`<span class="bid">${esc(m.baseline_id)}</span>`
+      +(bad?`<span class="bid">原因：${esc(((M.invalid_reasons[m.id]||{})[s.case_id]||[]).join(", ")||"—")}</span>`:``);
+    row.append(head);
+    const wrap=document.createElement("div");wrap.className="sheetwrap";
+    const im=document.createElement("img");
+    im.loading="lazy";im.decoding="async";im.width=1024;im.height=544;
+    im.alt=`${m.display} · ${s.case_id} · 8 views`;
+    im.src=imgUrl(m.id,s.case_id);
+    im.addEventListener("error",()=>{wrap.replaceChildren(Object.assign(document.createElement("div"),{className:"note",textContent:"图像缺失："+im.src}))});
+    im.addEventListener("click",()=>{$("lbImg").src=im.src;$("lbCap").textContent=`${m.display} · ${s.case_id} · 8 views (0/30/90/120/180/210/270/300°)`;$("lightbox").classList.add("on")});
+    wrap.append(im);row.append(wrap);
+    box.append(row);
+  }
+  paintSel();
+}
+document.querySelectorAll(".ctrl button[data-f]").forEach(b=>b.addEventListener("click",()=>{
+  filter=b.dataset.f;document.querySelectorAll(".ctrl button[data-f]").forEach(x=>x.classList.toggle("on",x===b));render();
+}));
+$("onlyInvalid").addEventListener("change",e=>{onlyInvalid=e.target.checked;render()});
+["q","split","cat"].forEach(id=>$(id).addEventListener("input",()=>{buildList();render()}));
+$("prev").addEventListener("click",()=>{if(idx>0){idx--;render()}});
+$("next").addEventListener("click",()=>{if(idx<rows.length-1){idx++;render()}});
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT")return;
+  if(e.key==="ArrowRight")$("next").click();else if(e.key==="ArrowLeft")$("prev").click();
+  else if(e.key==="Escape")$("lightbox").classList.remove("on");
+});
+$("lightbox").addEventListener("click",()=>$("lightbox").classList.remove("on"));
+fetch(MANIFEST,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("HTTP "+r.status);return r.json()}).then(m=>{
+  M=m;
+  const sp=new Set(),ct=new Set();
+  for(const s of m.samples){sp.add(s.split);ct.add(s.category)}
+  for(const v of [...sp].sort())$("split").append(new Option(v,v));
+  for(const v of [...ct].sort())$("cat").append(new Option(v,v));
+  $("loading").style.display="none";$("app").style.display="";
+  buildList();render();
+}).catch(e=>{$("loading").textContent="清单载入失败："+e});
+</script>
+</body></html>
