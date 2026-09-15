@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Score board · every method, every metric</title>
+<meta name="description" content="All CLIP12 and Uni3D scores for the ten-method test-set comparison, including OURS under two computation conventions (fixed best seed vs best-of-3-seed oracle).">
+<style>
+:root{--ink:#15202b;--muted:#64748b;--line:#d8e0e8;--bg:#f4f7fa;--accent:#115e59;--ours:#b42318;--oursbg:#fff3f1;--ext:#7c2d12;--warn:#b45309}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13.5px/1.5 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+header{background:#102a43;color:#fff;padding:14px 22px}
+header h1{margin:0 0 5px;font-size:19px}
+header p{margin:0;color:#cfe3f3;font-size:12.5px;max-width:1180px}
+header a{color:#8fd3ff}
+.navlink{display:inline-block;margin-top:7px;background:#1d4ed8;color:#fff;text-decoration:none;font-size:12.5px;font-weight:650;padding:5px 11px;border-radius:7px}
+.navlink:hover{background:#1e40af}
+main{padding:14px 22px 80px;max-width:1680px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:10;border-bottom:1px solid var(--line)}
+.tabs button{font:inherit;font-size:13px;padding:6px 12px;border:1px solid #9fb0c0;border-radius:8px;background:#fff;cursor:pointer;color:#334e68}
+.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:650}
+.panel{display:none}.panel.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:14px}
+.card h2{margin:0 0 4px;font-size:16px}
+.card h2 small{font-weight:400;color:var(--muted);font-size:12.5px}
+.card h3{margin:14px 0 6px;font-size:14px;color:#334e68}
+.lead{font-size:12.5px;color:var(--muted);line-height:1.7;margin:6px 0 10px}
+.lead b{color:var(--ink)}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:6px 9px;border-bottom:1px solid #eaeff4;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+th{background:#f7fafc;color:#334e68;font-weight:650;position:sticky;top:0;z-index:2;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:1}
+th:first-child{background:#f7fafc;z-index:3}
+tbody tr:hover td{background:#f9fcfe}
+tbody tr:hover td:first-child{background:#f2f8fc}
+tr.me td{background:var(--oursbg);font-weight:700}
+tr.me td:first-child{background:var(--oursbg)}
+tr.sec td{background:#eef4f9;font-weight:700;color:#28455f;text-align:left}
+tr.sec td:first-child{background:#eef4f9}
+.pos{color:#8a2318;font-weight:650}
+.neg{color:#3f5668}
+.dim{color:#94a3b8}
+.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:99px;background:#eef4f9;color:#3f5668;margin-left:5px}
+.tag.r{background:#fdeceb;color:#8a2318;font-weight:650}
+.tag.e{background:#fdece0;color:var(--ext)}
+.tag.v{background:#e7f0ff;color:#1d4ed8}
+.tag.s{background:#f0fdf4;color:#166534}
+.ctrlrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 10px}
+.ctrlrow button{font:inherit;font-size:12.5px;padding:5px 10px;border:1px solid #9fb0c0;border-radius:7px;background:#fff;cursor:pointer}
+.ctrlrow button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ctrlrow input,.ctrlrow select{font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid #9fb0c0;border-radius:7px;background:#fff}
+.bar{display:inline-block;height:8px;background:var(--ours);border-radius:99px;vertical-align:middle}
+th.colref,td.colref{background:#fff5f3}
+th.colref{background:#fdeceb;color:#8a2318}
+tr:hover td.colref{background:#fdeceb}
+.bar.gray{background:#9db4c8}
+.note{font-size:12.5px;color:var(--muted);line-height:1.75}
+.note b{color:var(--ink)}
+.note code{background:#f1f5f9;padding:1px 5px;border-radius:4px;font-size:12px}
+.legend{font-size:12px;color:var(--muted);margin-top:8px}
+.kpi{display:flex;flex-wrap:wrap;gap:12px;margin:2px 0 12px}
+.kpi div{background:#f7fafc;border:1px solid var(--line);border-radius:9px;padding:8px 13px;min-width:130px}
+.kpi .k{font-size:11.5px;color:var(--muted)}
+.kpi .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<header>
+  <h1>Score board · every method, every metric</h1>
+  <p>Test-set scores for the ten-method comparison (<b>OURS</b>, BASE, Teacher-II, and 7 external text-to-3D baselines), straight out of the frozen evaluation artefacts. <b>OURS is reported under two conventions</b>: the fixed reference seed (<code>OURS-seed2027-step12000</code>) and a post-hoc best-of-3-seed oracle. <a href="https://qiu-yuchen.github.io/">← qiu-yuchen.github.io</a></p>
+  <a class="navlink" href="index.html">← 回到 10 方法对齐图库</a>
+</header>
+<main>
+  <div class="tabs" id="tabs">
+    <button data-t="overview" class="on">总览 · 全指标一览</button>
+    <button data-t="paired">配对对比 · Δ 与 95% CI</button>
+    <button data-t="breakdown">分类 / 划分拆分</button>
+    <button data-t="ours">OURS 两种口径</button>
+    <button data-t="prompt">逐 prompt 明细</button>
+    <button data-t="notes">口径与来源</button>
+  </div>
+
+  <section class="panel on" id="p-overview">
+    <div class="card">
+      <h2>总览 <small>— 每个方法的全部指标</small></h2>
+      <div class="kpi" id="kpi"></div>
+      <div class="ctrlrow">
+        <span style="font-size:12.5px;color:var(--muted)">指标</span>
+        <select id="ovMetric">
+          <option value="clip12_average">CLIP12 average ×100</option>
+          <option value="clip12_best">CLIP12 best-view ×100</option>
+          <option value="uni3d">Uni3D</option>
+        </select>
+        <button id="ovSort">按该指标排序</button>
+        <span class="legend" id="ovLegend"></span>
+      </div>
+      <div class="tblwrap"><table id="ovTable"></table></div>
+      <div class="note" style="margin-top:10px">
+        <b>CLIP12 average</b>：每次生成的 12 个视角先取平均，再把同一 prompt 的两条有效推理重复取平均，最后按 prompt 汇总——“average of average”。<br>
+        <b>CLIP12 best-view</b>：每次生成的 12 个视角先取<b>最大</b>，其余聚合完全相同——best 与 average 都不对训练 seed 或推理重复做择优。<br>
+        <b>Δ</b> 一栏是 <b>OURS（固定参考）− 该方法</b>，正数表示 OURS 更高；括号内为配对 bootstrap 95% 区间，只有 7 个外部方法有归档区间（见「配对对比」页）。<br>
+        <b>Uni3D</b>：LGM 为高斯表示，该指标按当前评测范围不适用，显示 <span class="dim">N/A</span>，不填 0。
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-paired">
+    <div class="card">
+      <h2>配对对比 <small>— 与固定参考 OURS-seed2027-step12000 的逐 prompt 配对</small></h2>
+      <div class="ctrlrow" id="pmMetric">
+        <button data-m="clip12_average" class="on">CLIP12 average</button>
+        <button data-m="clip12_best">CLIP12 best-view</button>
+        <button data-m="uni3d">Uni3D</button>
+      </div>
+      <div class="tblwrap"><table id="pmTable"></table></div>
+      <div class="note" style="margin-top:10px" id="pmNote"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-breakdown">
+    <div class="card">
+      <h2>分类拆分 <small>— CLIP12 average ×100，行 = 8 个类别</small></h2>
+      <div class="tblwrap"><table id="bdCat"></table></div>
+      <h3>划分拆分 <small style="font-weight:400;color:var(--muted)">— 行 = 6 个测试划分</small></h3>
+      <div class="tblwrap"><table id="bdSplit"></table></div>
+      <div class="note" style="margin-top:10px">每格是该单元格内所有有有效 CLIP 的 prompt 的算术平均；括号内为有效 prompt 数。单元格之间样本不同，不做显著性检验，仅用于看方法在不同类别/划分上的相对强弱是否稳定。</div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-ours">
+    <div class="card">
+      <h2>OURS 的两种计算口径 <small>— 论文主数字只用第一种</small></h2>
+      <div class="note" style="margin-bottom:10px">
+        <b>口径 A（固定参考，论文口径）</b>：<code>OURS-seed2027-step12000</code>，预注册的单一参考分支；本页与图库中所有 “OURS” 与 Δ 都以它为准。<br>
+        <b>口径 B（best-of-3 seed oracle，事后上界）</b>：逐 prompt、逐指标在 <code>seed2026 / seed2027 / seed2028</code> 三个训练 seed 中取<b>最大值</b>。它是一个<b>事后、按指标分别择优</b>的上界参考，<b>不是</b>冻结假设的替代，也<b>不</b>用于任何论文主张。区间与胜负只在这两个口径之间比较。
+      </div>
+      <div class="tblwrap"><table id="oursTable"></table></div>
+      <h3>三个训练 seed 的各自表现</h3>
+      <div class="tblwrap"><table id="seedTable"></table></div>
+      <h3>best-of-3 实际选中了哪个 seed</h3>
+      <div class="tblwrap"><table id="pickTable"></table></div>
+      <div class="note" style="margin-top:8px">「相对 BASE 的 Δ」在 <b>OURS ∩ BASE 共同有效</b>的 prompt 上配对计算，属描述性对照；归档的事后分析文件用的是它自己的 1519 条交集，因此与这里的数值会有千分位量级的差别。<b>胜/负/平</b>按 Δ 符号统计（1e-9 容差内记平）。抽中次数合计 = 该指标上三个 seed 都有值的 prompt 数，与「完整三 seed 的 prompt 数」略有差异，原因是有少量 prompt 只有 1–2 个 seed 可用。</div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-prompt">
+    <div class="card">
+      <h2>逐 prompt 明细 <small>— 全部 1536 条冻结提示词 × 10 个方法</small></h2>
+      <div class="ctrlrow">
+        <input id="pq" placeholder="搜索 prompt / 原始 ID / 划分 / 分类" autocomplete="off">
+        <select id="pmode">
+          <option value="0">CLIP12 average</option>
+          <option value="1">CLIP12 best-view</option>
+          <option value="2">Uni3D</option>
+        </select>
+        <select id="psort"><option value="">默认顺序</option></select>
+        <button id="pdir">↓ 降序</button>
+        <span class="legend" id="pcount"></span>
+      </div>
+      <div class="tblwrap"><table id="pTable"></table></div>
+      <div class="note" style="margin-top:8px">表内数值 ×100（CLIP）；<b>—</b> 表示该 prompt 在该方法上没有有效结果（保留为空，不填 0、不重抽）。表头可点击排序。原始数据：<a href="scores.json">scores.json</a>（逐 prompt）、<a href="scores_aggregate.json">scores_aggregate.json</a>（汇总）。</div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-notes">
+    <div class="card">
+      <h2>口径与来源</h2>
+      <div class="note" id="provNote"></div>
+    </div>
+  </section>
+</main>
+<script>
+"use strict";
+const AGG="scores_aggregate.json",PRM="scores.json";
+const PX=(v,d=4)=>v==null?"—":(v*100).toFixed(d);
+const NU=(v,d=4)=>v==null?"—":v.toFixed(d);
+const SG=(v,d=4)=>v==null?"—":(v>0?"+":"")+(v*100).toFixed(d);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const short={ours:"OURS",base:"BASE",teacher:"Teacher-II",direct25:"Direct25",lgm:"LGM",shape:"Shap-E",
+  ln3diff:"LN3Diff",instantmesh:"InstantMesh",topia:"3DTopia-XL",hunyuan_fr40k:"Hunyuan3D-2 (FR40K accel)",
+  ours_b3:"OURS best-of-3 上界",ours_s2026:"OURS-seed2026",ours_s2028:"OURS-seed2028",
+  scale2k:"SCALE-2K-R10",teacher_it:"Teacher-IT"};
+const SECTION={reference:"参考",internal:"同实验内部分支",external:"外部基线",
+  ours_variant:"OURS 另一口径",ours_seed:"OURS 其他训练 seed",internal_ablation:"同实验消融分支"};
+const REF="ours";
+let A=null,P=null,pmMetric="clip12_average",ovMetric="clip12_average",ovSorted=false;
+let pMode=0,pSort="",pDir=-1,pRows=[];
+
+function metricLabel(m){return {clip12_average:"CLIP12 average",clip12_best:"CLIP12 best-view",uni3d:"Uni3D"}[m]}
+function aggOf(id,metric){return (A.aggregates[id]||{})[metric]||null}
+function paired(id,metric){return (aggOf(id,metric)||{}).paired||null}
+
+/* ---------- overview ---------- */
+function buildKpi(){
+  const k=$("kpi");k.replaceChildren();
+  const ref=aggOf(REF,"clip12_average"),b3=aggOf("ours_b3","clip12_average");
+  const items=[
+    ["测试集 prompt",A.test_set_size,null],
+    ["图库对齐样本",A.gallery_cohort_size,null],
+    ["OURS 配对有效 prompt",ref&&ref.paired?ref.paired.n:"—",null],
+    ["OURS CLIP avg ×100",ref?PX(ref.paired?ref.paired.reference_mean:ref.mean,4):"—",null],
+    ["OURS best-of-3 ×100",b3?PX(b3.paired?b3.paired.method_mean:b3.mean,4):"—",null],
+    ["外部基线数",A.methods.filter(m=>m.kind==="external").length,null],
+  ];
+  for(const [lab,val] of items){
+    const d=document.createElement("div");
+    d.innerHTML=`<div class="k">${esc(lab)}</div><div class="v">${esc(val)}</div>`;
+    k.append(d);
+  }
+}
+function buildOverview(){
+  const t=$("ovTable");
+  const lo=(A.aggregates[REF][ovMetric]&&A.aggregates[REF][ovMetric].mean);
+  let rows=[];let secs=[];
+  const kinds=["reference","internal","external","ours_variant","ours_seed","internal_ablation"];
+  for(const k of kinds){
+    const ms=A.methods.filter(m=>m.kind===k);
+    if(ms.length)secs.push({k,ms});
+  }
+  let html=`<thead><tr><th>方法</th><th>类型</th><th>${metricLabel(ovMetric)}</th>`
+    +`<th>中位数</th><th>P25</th><th>P75</th><th>标准差</th><th>有效 prompt</th>`
+    +`<th>OURS−方法 <span style="font-weight:400">(配对)</span></th><th>与参考比</th></tr></thead><tbody>`;
+  for(const s of secs){
+    html+=`<tr class="sec"><td colspan="10">${esc(SECTION[s.k]||s.k)}</td></tr>`;
+    let list=s.ms.map(m=>({m,a:aggOf(m.id,ovMetric)}));
+    if(ovSorted)list.sort((x,y)=>((y.a&&y.a.mean)||-1e9)-((x.a&&x.a.mean)||-1e9));
+    for(const {m,a} of list){
+      const p=a&&a.paired;
+      const isRef=m.id===REF;
+      const isOracle=m.kind==="ours_variant";
+      // column convention is OURS_reference − method; the best-of-3 oracle sits above the
+      // reference, so its signed value is flipped here and labelled explicitly.
+      const d=p?(isOracle?-p.delta_mean:p.delta_mean):null;
+      html+=`<tr class="${isRef?"me":""}"><td>${esc(m.label)}</td>`
+        +`<td><span class="tag ${m.kind==="reference"?"r":m.kind==="external"?"e":m.kind==="ours_variant"?"v":m.kind==="ours_seed"?"s":""}">${esc(SECTION[m.kind]||m.kind)}</span></td>`
+        +`<td><b>${a?PX(a.mean):"—"}</b></td>`
+        +`<td>${a?PX(a.median):"—"}</td><td>${a?PX(a.p25):"—"}</td><td>${a?PX(a.p75):"—"}</td>`
+        +`<td>${a?PX(a.std):"—"}</td><td>${a?a.n:"0"}</td>`
+        +`<td class="${d!=null&&d>0?"pos":"neg"}" title="${isOracle?"口径 B（best-of-3 上界）− 口径 A（固定参考），正数表示事后上界更高":""}">`
+        +`${d==null?"—":SG(d)+(isOracle?" 上界":"")}</td>`
+        +`<td>${bar(a?Math.max(0,a.mean):null,lo)}</td></tr>`;
+    }
+  }
+  html+="</tbody>";
+  t.innerHTML=html;
+  $("ovLegend").innerHTML=`基准线 = ${metricLabel(ovMetric)} 下 OURS 固定参考的总体均值 <b>${PX(lo)}</b>；末列 <span class="bar" style="width:26px"></span> 达到/超过参考，<span class="bar gray" style="width:18px"></span> 低于参考（长度随数值增大）。`;
+}
+function bar(v,lo){
+  if(v==null)return "—";
+  const w=Math.max(6,Math.min(76,40+(v-(lo||0))*100));
+  return `<span class="bar${v<lo?" gray":""}" style="width:${w.toFixed(0)}px"></span>`;
+}
+
+/* ---------- paired ---------- */
+function buildPaired(){
+  const t=$("pmTable");
+  const lo=A.aggregates[REF][pmMetric];
+  let html=`<thead><tr><th>方法</th><th>配对 prompt</th><th>OURS</th><th>方法</th>`
+    +`<th>Δ = OURS − 方法</th><th>95% CI</th><th>胜</th><th>负</th><th>平</th><th>CI 来源</th></tr></thead><tbody>`;
+  const kinds=["internal","external","ours_variant","ours_seed","internal_ablation"];
+  for(const k of kinds){
+    const ms=A.methods.filter(m=>m.kind===k);
+    if(!ms.length)continue;
+    html+=`<tr class="sec"><td colspan="10">${esc(SECTION[k]||k)}</td></tr>`;
+    const list=ms.map(m=>({m,p:paired(m.id,pmMetric)})).sort((x,y)=>((y.p&&y.p.delta_mean)||-1e9)-((x.p&&x.p.delta_mean)||-1e9));
+    for(const {m,p} of list){
+      if(!p){html+=`<tr><td>${esc(m.label)}</td><td colspan="9" class="dim">该指标不适用</td></tr>`;continue}
+      const isRef=m.id===REF;
+      const ci=p.ci95?`[${SG(p.ci95[0],4)}, ${SG(p.ci95[1],4)}]`:"—";
+      html+=`<tr class="${isRef?"me":""}"><td>${esc(m.label)}</td><td>${p.n}</td>`
+        +`<td>${PX(p.reference_mean)}</td><td>${PX(p.method_mean)}</td>`
+        +`<td class="${p.delta_mean>0?"pos":"neg"}"><b>${SG(p.delta_mean)}</b></td>`
+        +`<td>${ci}</td><td>${p.wins}</td><td>${p.losses}</td><td>${p.ties}</td>`
+        +`<td>${p.ci_source?"归档 bootstrap":"—"}</td></tr>`;
+    }
+  }
+  t.innerHTML=html+"</tbody>";
+  $("pmNote").innerHTML=`单位是「每 prompt 恰好两条有效推理重复的均值」；配对 prompt 数 = 双方在该指标上共同有效的 prompt 数，因此逐行不同，<b>不构成同一子集上的全方法排名</b>。<br>`
+    +`Δ 为 <b>OURS 固定参考 − 该方法</b>，正数表示 OURS 更高；胜/负/平按 Δ 的符号统计（1e-9 容差内记平）。<br>`
+    +`95% CI 只有 7 个外部方法有<b>归档的配对 bootstrap</b>（10000 次、基础 seed 20260822，见 <code>comparison_figure_handoff_20260915/final_statistics</code>）；`
+    +`BASE / Teacher-II / OURS 其他 seed 与消融分支没有归档区间，因此显示 “—”，它们的 Δ 与胜负是<b>描述性</b>的，本页未为其新造区间。<br>`
+    +`LGM 的 Uni3D 按当前评测范围不适用，整行不可用，显示为不适用而不是 0。<br>`
+    +`<b>OURS best-of-3（口径 B）</b> 是参考之上的事后上界，因此它在 Δ 列显示为负值（OURS 固定参考 − 口径 B），胜负统计同样按该方向计。`;
+}
+
+/* ---------- breakdown ---------- */
+function buildBreakdown(){
+  const build=(tbl,data,rowLabel)=>{
+    const ids=A.methods.map(m=>m.id);
+    let html=`<thead><tr><th>${rowLabel}</th><th>样本</th>`+ids.map(i=>`<th>${esc(short[i]||i)}</th>`).join("")+`</tr></thead><tbody>`;
+    for(const [g,row] of Object.entries(data)){
+      html+=`<tr><td>${esc(g)}</td><td>${row.n_samples}</td>`;
+      let bestV=null;
+      for(const i of ids){const c=row.methods[i];if(c&&(bestV==null||c.mean>bestV))bestV=c.mean}
+      for(const i of ids){
+        const c=row.methods[i];
+        const isBest=c&&bestV!=null&&Math.abs(c.mean-bestV)<1e-12;
+        html+=`<td class="${i===REF?"pos":""}" ${isBest?'style="font-weight:700"':""}>${c?PX(c.mean,3)+` <span class="dim">(${c.n})</span>`:"—"}</td>`;
+      }
+      html+="</tr>";
+    }
+    tbl.innerHTML=html+"</tbody>";
+  };
+  build($("bdCat"),A.by_category,"类别");
+  build($("bdSplit"),A.by_split,"划分");
+}
+
+/* ---------- ours variants ---------- */
+function buildOurs(){
+  const t=$("oursTable");
+  let html=`<thead><tr><th>口径</th><th>分支</th><th>CLIP avg ×100</th><th>CLIP best ×100</th><th>Uni3D</th>`
+    +`<th>有效 prompt</th><th>相对口径 A</th></tr></thead><tbody>`;
+  const a=aggOf(REF,"clip12_average"),b=aggOf(REF,"clip12_best"),u=aggOf(REF,"uni3d");
+  const a3=aggOf("ours_b3","clip12_average"),b3=aggOf("ours_b3","clip12_best"),u3=aggOf("ours_b3","uni3d");
+  const p3=paired("ours_b3","clip12_average"),p3b=paired("ours_b3","clip12_best");
+  html+=`<tr class="me"><td>A · 固定参考（论文口径）</td><td>OURS-seed2027-step12000</td>`
+    +`<td>${PX(a.paired?a.paired.reference_mean:a.mean)}</td><td>${b?PX(b.paired?b.paired.reference_mean:b.mean):"—"}</td>`
+    +`<td>${u?NU(u.paired?u.paired.reference_mean:u.mean):"—"}</td><td>${a.paired?a.paired.n:"—"}</td><td>基准</td></tr>`;
+  html+=`<tr><td>B · best-of-3 事后上界</td><td>seed2026 / 2027 / 2028 逐 prompt 逐指标取最大</td>`
+    +`<td>${a3?PX(a3.paired?a3.paired.method_mean:a3.mean):"—"}</td><td>${b3?PX(b3.paired?b3.paired.method_mean:b3.mean):"—"}</td>`
+    +`<td>${u3?NU(u3.paired?u3.paired.method_mean:u3.mean):"—"}</td><td>${a3&&a3.paired?a3.paired.n:"—"}</td>`
+    +`<td class="pos">CLIP avg ${p3?SG(-p3.delta_mean):"—"} / best ${p3b?SG(-p3b.delta_mean):"—"}</td></tr>`;
+  t.innerHTML=html+"</tbody>";
+
+  const st=$("seedTable");
+  let sh=`<thead><tr><th>训练 seed 分支</th><th>CLIP avg ×100</th><th>CLIP best ×100</th><th>Uni3D</th><th>有效 prompt</th><th>OURS−该方法 · CLIP avg</th></tr></thead><tbody>`;
+  for(const bid of ["OURS-seed2026-step12000","OURS-seed2027-step12000","OURS-seed2028-step12000"]){
+    const r=A.ours_seed_detail[bid]||{};
+    const id=bid.includes("2026")?"ours_s2026":bid.includes("2027")?REF:"ours_s2028";
+    const p=paired(id,"clip12_average");
+    sh+=`<tr class="${id===REF?"me":""}"><td>${esc(bid)}</td>`
+      +`<td>${r.clip12_average?PX(r.clip12_average.mean):"—"}</td>`
+      +`<td>${r.clip12_best?PX(r.clip12_best.mean):"—"}</td>`
+      +`<td>${r.uni3d?NU(r.uni3d.mean):"—"}</td>`
+      +`<td>${r.clip12_average?r.clip12_average.n:"—"}</td>`
+      +`<td>${id===REF?"基准":(p?SG(p.delta_mean):"—")}</td></tr>`;
+  }
+  st.innerHTML=sh+"</tbody>";
+
+  const pt=$("pickTable");
+  let ph=`<thead><tr><th>指标</th><th>完整三 seed 的 prompt 数</th>`+
+    ["OURS-seed2026-step12000","OURS-seed2027-step12000","OURS-seed2028-step12000"].map(s=>`<th>选中 ${esc(s.replace("-step12000",""))}</th>`).join("")
+    +`<th>相对 BASE 的 Δ</th><th>vs BASE 胜/负/平</th></tr></thead><tbody>`;
+  for(const m of ["clip12_average","clip12_best","uni3d"]){
+    const d=A.ours_best_of_3_detail[m]||{},vb=(aggOf("ours_b3",m)||{}).vs_base;
+    ph+=`<tr><td>${metricLabel(m)}</td><td>${d.complete_best_of_3!=null?d.complete_best_of_3:"—"}</td>`;
+    for(const s of ["OURS-seed2026-step12000","OURS-seed2027-step12000","OURS-seed2028-step12000"]){
+      ph+=`<td>${(d.selected_seed_counts||{})[s]||0}</td>`;
+    }
+    ph+=`<td class="${vb&&vb.delta_mean>0?"pos":"neg"}">${vb?(m==="uni3d"?NU(vb.delta_mean):SG(vb.delta_mean)):"—"}</td>`
+      +`<td>${vb?`${vb.wins} / ${vb.losses} / ${vb.ties}`:"—"}</td></tr>`;
+  }
+  pt.innerHTML=ph+"</tbody>";
+}
+
+/* ---------- per-prompt ---------- */
+function buildPromptTable(){
+  const ids=P.methods.map(m=>m.id);
+  const q=$("pq").value.trim().toLowerCase();
+  let list=pRows.filter(r=>!q||(r.k+" "+r.sid+" "+r.split+" "+r.cat).toLowerCase().includes(q));
+  if(pSort){
+    const idx=ids.indexOf(pSort);
+    list=[...list].sort((x,y)=>{
+      const a=x.v[idx],b=y.v[idx];
+      if(a==null&&b==null)return 0;if(a==null)return 1;if(b==null)return -1;
+      return (b-a)*pDir;
+    });
+  }
+  let html=`<thead><tr><th>样本</th><th>划分</th><th>分类</th>`
+    +ids.map(i=>`<th data-s="${i}" class="${i===REF?"colref":""}" style="cursor:pointer"${i===REF?' title="固定参考口径 A"':""}>${esc(short[i]||i)}${pSort===i?(pDir<0?" ↓":" ↑"):""}</th>`).join("")
+    +`</tr></thead><tbody>`;
+  for(const r of list){
+    const vals=r.v.map(v=>v==null?null:v[pMode]);
+    const mx=Math.max(...vals.filter(v=>v!=null));
+    html+=`<tr><td title="${esc(r.sid)}">${esc(r.k)}</td><td class="dim">${esc(r.split)}</td><td class="dim">${esc(r.cat)}</td>`;    ids.forEach((id,i)=>{
+      const v=vals[i];
+      const cell=v==null?`<span class="dim">—</span>`:(pMode===2?NU(v,4):PX(v,2));
+      html+=`<td class="${id===REF?"colref pos":""}" ${v!=null&&Math.abs(v-mx)<1e-12?'style="font-weight:700"':""}>${cell}</td>`;
+    });
+    html+="</tr>";
+  }
+  $("pTable").innerHTML=html+"</tbody>";
+  $("pcount").textContent=`显示 ${list.length} / ${pRows.length} 条`;
+  $("psort").value=pSort;
+}
+
+/* ---------- wiring ---------- */
+function showTab(name){
+  const btn=document.querySelector(`#tabs button[data-t="${name}"]`);
+  if(!btn)return;
+  document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===btn));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id==="p-"+name));
+}
+document.querySelectorAll("#tabs button").forEach(b=>b.addEventListener("click",()=>{
+  showTab(b.dataset.t);
+  if(location.hash!=="#"+b.dataset.t)history.replaceState(null,"","#"+b.dataset.t);
+}));
+window.addEventListener("hashchange",()=>showTab(location.hash.slice(1)||"overview"));
+function recomputeOverview(){buildOverview()}
+$("ovMetric").addEventListener("change",e=>{ovMetric=e.target.value;buildOverview()});
+$("ovSort").addEventListener("click",e=>{ovSorted=!ovSorted;e.target.classList.toggle("on",ovSorted);buildOverview()});
+document.querySelectorAll("#pmMetric button").forEach(b=>b.addEventListener("click",()=>{
+  pmMetric=b.dataset.m;document.querySelectorAll("#pmMetric button").forEach(x=>x.classList.toggle("on",x===b));buildPaired();
+}));
+$("pq").addEventListener("input",buildPromptTable);
+$("pmode").addEventListener("change",e=>{pMode=+e.target.value;buildPromptTable()});
+$("psort").addEventListener("change",e=>{pSort=e.target.value;pDir=-1;buildPromptTable()});
+$("pdir").addEventListener("click",e=>{pDir=-pDir;e.target.textContent=pDir<0?"↓ 降序":"↑ 升序";buildPromptTable()});
+$("pTable").addEventListener("click",e=>{
+  const th=e.target.closest("th[data-s]");
+  if(!th)return;
+  const s=th.dataset.s;
+  if(pSort===s)pDir=-pDir;else{pSort=s;pDir=-1}
+  buildPromptTable();
+});
+
+Promise.all([
+  fetch(AGG,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("agg HTTP "+r.status);return r.json()}),
+  fetch(PRM,{cache:"no-store"}).then(r=>r.ok?r.json():null),
+]).then(([a,p])=>{
+  A=a;P=p;
+  pRows=Object.entries(p.per_case).map(([sid,row])=>{
+    const meta=p.sample_meta[sid]||{};
+    return {sid,k:meta.case_id||sid,split:meta.split||'-',cat:meta.category||'-',
+            v:P.methods.map(m=>row[m.id]||[null,null,null])};
+  });
+  const cidOf={};for(const r of pRows)cidOf[r.k]=r.sid;
+  buildKpi();buildOverview();buildPaired();buildBreakdown();buildOurs();
+  const sel=$("psort");
+  for(const m of P.methods){const o=new Option(short[m.id]||m.id,m.id);sel.append(o)}
+  buildPromptTable();
+  showTab(location.hash.slice(1)||"overview");
+  $("provNote").innerHTML=`
+  <b>数据来源（全部只读，未重算任何指标、未重跑推理）：</b><br>
+  · 原生分支（OURS 三个 seed / BASE / Teacher-II / SCALE-2K-R10 / Teacher-IT）逐 prompt 指标：H100 <code>trellis_image_teacher_pilot/ss_distill_flux8062_r10_formal_v5_validation_mask/reanalysis/corrected_semantic_completion_v1/per_prompt_metrics.jsonl</code>；<br>
+  · OURS best-of-3 事后上界：同目录 <code>ours_best_of_3_semantic.jsonl</code>（口径 = 逐 prompt 逐指标在三个训练 seed 中取最大）；<br>
+  · 7 个外部基线逐 prompt 指标：cloud48 <code>/root/fsas/external_baseline_expansion_20260913/statistics/&lt;BASELINE_ID&gt;/per_prompt.jsonl</code>；<br>
+  · 归档配对 bootstrap 区间：<code>comparison_figure_handoff_20260915/final_statistics/FINAL_COMPARISON_TABLE.json</code>。<br><br>
+  <b>聚合范围：</b>冻结测试集 <b>${A.test_set_size}</b> 条提示词（${Object.keys(A.by_split).length} 个划分 / ${Object.keys(A.by_category).length} 个类别）。定性对齐图库展示其中 10 个方法在 replicate 0 都有完整 12 视角的 <b>${A.gallery_cohort_size}</b> 条交集样本，是本集合的子集。<br><br>
+  <b>缺失与无效：</b>无效结果保留在覆盖分母内，不重抽、不填零；某方法在某 prompt 上没有有效结果时该格留空（<span class="dim">—</span>），逐行配对数量因此不同。<br><br>
+  <b>隔离指标：</b>OURS 的旧 ULIP 参考仍在隔离中，<b>本页不提供任何 ULIP 排名</b>。<br><br>
+  <b>Hunyuan 口径：</b><code>HUNYUAN3D2_FR40K_ACCEL_V1</code> 的 CLIP 属于 FR40K 加速 Paint；其 Uni3D 来自简化前的原 Shape，不等于最终 FR40K 网格几何。<br><br>
+  <b>LGM：</b>高斯表示，点指标（Uni3D）按当前评测范围不适用 → 一律 N/A，不填 0。<br><br>
+  <b>生成时间：</b>${esc(A.generated_at)}。`;
+}).catch(e=>{
+  document.querySelector("main").insertAdjacentHTML("afterbegin",
+    `<div class="card" style="color:#8a2318"><b>数据载入失败：</b>${esc(e.message)}</div>`);
+});
+</script>
+</body></html>

@@ -45,6 +45,27 @@ main{padding:14px 18px 70px;min-width:0}
 .sheetwrap img{display:block;width:100%;height:auto;border-radius:7px;background:#fff;cursor:zoom-in;border:1px solid #eef2f6}
 .note{font-size:12.5px;color:var(--muted);line-height:1.65}
 .note b{color:var(--ink)}
+.navlink{display:inline-block;margin-top:6px;background:#1d4ed8;color:#fff;text-decoration:none;font-size:13px;font-weight:650;padding:6px 12px;border-radius:7px}
+.navlink:hover{background:#1e40af}
+.sc{font-variant-numeric:tabular-nums;font-size:12px;border-radius:6px;padding:1px 7px;background:#eef4f9;color:#28455f;border:1px solid #dbe6ef}
+.sc b{color:#0f172a}
+.sc.win{background:#fdeceb;color:#8a2318;border-color:#f3c6c1}
+.sc.lose{background:#eef4f9;color:#4a5f74}
+.scboard{margin-bottom:12px}
+.scboard .hd{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.scboard h3{margin:0;font-size:14.5px}
+.scboard .hint{font-size:12px;color:var(--muted)}
+.srow{display:grid;grid-template-columns:190px 92px 1fr 96px 1fr 30px;gap:8px;align-items:center;padding:3px 6px;border-radius:6px;font-size:12.5px}
+.srow:nth-child(odd){background:#fafcfe}
+.srow.me{background:#fff3f1;font-weight:700}
+.srow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow .vv{font-variant-numeric:tabular-nums;text-align:right;color:#1f3b57}
+.bar{height:9px;background:#e8eef4;border-radius:99px;overflow:hidden}
+.bar > i{display:block;height:100%;background:#9db4c8;border-radius:99px}
+.srow.me .bar > i{background:var(--ours)}
+.srow .dl{font-variant-numeric:tabular-nums;text-align:right;font-size:12px;color:var(--muted)}
+.srow .dl.up{color:#8a2318;font-weight:650}
+.srow .rk{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
 #lightbox{position:fixed;inset:0;background:#0b121999;display:none;align-items:center;justify-content:center;z-index:50;padding:24px}
 #lightbox.on{display:flex}
 #lightbox img{max-width:94vw;max-height:84vh;background:#fff;border-radius:8px}
@@ -55,7 +76,8 @@ main{padding:14px 18px 70px;min-width:0}
 <body>
 <header>
   <h1>Test-set comparison · 10-way aligned gallery</h1>
-  <p>Qualitative comparison on the frozen <b>1522-prompt</b> test set. Every row shows the <b>same sample</b>, the <b>same inference replicate (r0)</b> and the <b>same 8 view indices</b>, so cells align across methods. Rendered images only — no 3D models, no videos. <a href="https://qiu-yuchen.github.io/">← qiu-yuchen.github.io</a></p>
+  <p>Qualitative comparison on the frozen <b>1522-prompt</b> test set. Every row shows the <b>same sample</b>, the <b>same inference replicate (r0)</b> and the <b>same 8 view indices</b>, so cells align across methods. Rendered images only — no 3D models, no videos. Each method header also carries that prompt's <b>CLIP12 score</b> from the frozen evaluation. <a href="https://qiu-yuchen.github.io/">← qiu-yuchen.github.io</a></p>
+  <a class="navlink" href="scores.html">全部得分结果 · 10 方法全指标汇总 →</a>
 </header>
 <div class="layout">
 <aside>
@@ -84,6 +106,14 @@ main{padding:14px 18px 70px;min-width:0}
       <p class="prompt" id="prompt"></p>
       <div class="tags" id="tags"></div>
     </section>
+    <section class="card scboard">
+      <div class="hd">
+        <h3>本 prompt 的 CLIP 得分榜 <span style="font-weight:400;color:var(--muted)">— 10 个方法，同一 prompt、同一评测口径</span></h3>
+        <span class="hint">数值 ×100；<b>Δ</b> = OURS − 该方法（正 = OURS 更好）；★ 为本 prompt 最高分</span>
+      </div>
+      <div id="scoreboard"></div>
+      <div class="hint" id="scorenote" style="margin-top:8px"></div>
+    </section>
     <div class="ctrl">
       <span style="font-size:13px;color:var(--muted)">方法筛选</span>
       <button data-f="all" class="on">全部 10</button>
@@ -97,6 +127,7 @@ main{padding:14px 18px 70px;min-width:0}
       <b>样本范围：</b>10 个方法在 replicate 0 下均具备完整 12 视角的<b>交集</b>，共 <b>1522</b> 条；不满足的样本不出现在本页，也不用其它样本替代。同一行的样本编号、推理重复与视角索引逐格一致。<br>
       <b>无效结果：</b>保持原状并逐行标注，不重抽、不填零，无效样本仍占自己的编号。<br>
       <b>图像规格：</b>源图为 512×512 逐视角渲染；本页每视角下采样到 256×256 后拼成一张 1024×544 的 WebP（为便于公开托管而压缩）。所有数值结论一律基于原始未压缩渲染，不基于本页图像。<br>
+      <b>CLIP 得分：</b>每个方法标题栏给出该 prompt 的 <code>CLIP12 average</code>（每次生成 12 视角取平均 → 两条有效推理重复取平均）与 <code>CLIP12 best-view</code>（12 视角取最大，其余相同），数值 ×100。固定参考 <b>OURS-seed2027-step12000</b>；<b>Δ = OURS − 该方法</b>，正数表示 OURS 在该 prompt 上更高。缺失值显示为 “—”，不填 0、不重抽。完整指标（含 Uni3D、OURS 固定 seed 与 best-of-3 seed 两种口径、分类/划分拆分）见 <a href="scores.html">全部得分结果</a>。<br>
       <b>Hunyuan 列：</b>标注为 <i>Hunyuan3D-2 (FR40K accelerated)</i>，是明确采用的加速 Paint 配置，不等于原始标准 Paint。OURS 的旧 ULIP 仍处隔离范围，本页不涉及跨方法 ULIP 排名。
     </section>
   </div>
@@ -105,13 +136,17 @@ main{padding:14px 18px 70px;min-width:0}
 <div id="lightbox"><img id="lbImg" alt=""><div class="cap" id="lbCap"></div></div>
 <script>
 "use strict";
-const MANIFEST="manifest.json";
+const MANIFEST="manifest.json",SCORES="scores.json";
 const VIEWS8=[0,1,3,4,6,7,9,10];
-let M=null,rows=[],idx=0,filter="all",onlyInvalid=false;
+const PX=(v,d=2)=>v==null?"—":(v*100).toFixed(d);
+const SG=(v,d=2)=>v==null?"—":(v>0?"+":"")+(v*100).toFixed(d);
+let M=null,S=null,rows=[],idx=0,filter="all",onlyInvalid=false;
 const $=id=>document.getElementById(id);
 function imgUrl(method,cid){return `img/${method}/${cid}_r0.webp`}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function grp(m){return ["ours","base","teacher"].includes(m)?"cloud_native":"external"}
+function sc(sid,mid){if(!S)return null;const r=S.per_case[sid];return r&&r[mid]?r[mid]:null}
+function refAvg(sid){const r=sc(sid,"ours");return r?r[0]:null}
 function buildList(){
   const q=$("q").value.trim().toLowerCase(),sp=$("split").value,ct=$("cat").value;
   rows=M.samples.filter(s=>{
@@ -138,6 +173,35 @@ function paintSel(){
   for(const li of $("list").children){li.classList.toggle("on",!!cur&&li.querySelector(".cid").textContent===cur.case_id)}
   if(cur){$("cur").textContent=cur.case_id;const on=$("list").querySelector("li.on");if(on)on.scrollIntoView({block:"nearest"})}
 }
+function paintScoreboard(s){
+  const box=$("scoreboard");box.replaceChildren();
+  const ref=refAvg(s.sample_id);
+  const items=M.methods.map(m=>{
+    const r=sc(s.sample_id,m.id);
+    return {m,avg:r?r[0]:null,best:r?r[1]:null};
+  }).filter(x=>x.avg!=null);
+  if(!items.length){box.innerHTML=`<div class="hint">该样本没有可用的 CLIP 分数。</div>`;$("scorenote").textContent="";return}
+  const lo=Math.min(...items.map(x=>x.avg)),hi=Math.max(...items.map(x=>x.avg));
+  const span=Math.max(hi-lo,1e-6);
+  const best=hi;
+  items.sort((a,b)=>b.avg-a.avg);
+  const frag=document.createDocumentFragment();
+  items.forEach((x,i)=>{
+    const d=(ref!=null&&x.m.id!=="ours")?ref-x.avg:null;
+    const w=0.12+0.88*(x.avg-lo)/span;
+    const row=document.createElement("div");
+    row.className="srow"+(x.m.id==="ours"?" me":"");
+    row.innerHTML=`<span class="nm">${esc(x.m.display)}</span>`
+      +`<span class="vv"><b>${PX(x.avg)}</b></span>`
+      +`<span class="bar"><i style="width:${(w*100).toFixed(1)}%"></i></span>`
+      +`<span class="vv">best ${PX(x.best)}</span>`
+      +`<span class="dl${d!=null&&d>1e-9?" up":""}">${d==null?"参考":SG(d)}</span>`
+      +`<span class="rk">${x.avg>=best-1e-12?"★":(i+1)}</span>`;
+    frag.append(row);
+  });
+  box.append(frag);
+  $("scorenote").textContent="CLIP12 average = 每次生成 12 视角取平均 → 同一 prompt 两条有效推理重复取平均；best = 12 视角取最大，其余相同。缺失一律留空（不填 0、不重抽）。";
+}
 function render(){
   const s=rows[idx];if(!s)return;
   $("cid").textContent=s.case_id;
@@ -145,18 +209,24 @@ function render(){
   $("prompt").textContent=s.prompt;
   $("tags").textContent=`划分 ${s.split} · 分类 ${s.category} (${s.category_name})`;
   $("pos").textContent=String(idx+1);$("total").textContent=String(rows.length);
+  paintScoreboard(s);
   const box=$("rows");box.replaceChildren();
   for(const m of M.methods){
     if(filter==="ours"&&!["ours","base"].includes(m.id))continue;
     if(filter==="ext"&&["ours","base","teacher"].includes(m.id))continue;
     const bad=(M.invalid[m.id]||[]).includes(s.case_id);
     if(onlyInvalid&&!bad)continue;
+    const r=sc(s.sample_id,m.id),ref=refAvg(s.sample_id);
+    const d=(r&&r[0]!=null&&ref!=null&&m.id!=="ours")?ref-r[0]:null;
     const row=document.createElement("div");row.className="mrow";
     const head=document.createElement("div");head.className="mhead";
     head.innerHTML=`<span class="name">${esc(m.display)}</span>`
       +(m.id==="ours"?`<span class="badge ours">固定参考</span>`:``)
       +(grp(m.id)==="external"?`<span class="badge ext">外部基线</span>`:``)
       +`<span class="badge${bad?" bad":""}">${bad?"无效":"有效"}</span>`
+      +`<span class="sc">CLIP avg <b>${r?PX(r[0]):"—"}</b></span>`
+      +`<span class="sc">best <b>${r?PX(r[1]):"—"}</b></span>`
+      +(d!=null?`<span class="sc${d>1e-9?" win":" lose"}">Δ ${SG(d)}</span>`:``)
       +`<span class="bid">${esc(m.baseline_id)}</span>`
       +(bad?`<span class="bid">原因：${esc(((M.invalid_reasons[m.id]||{})[s.case_id]||[]).join(", ")||"—")}</span>`:``);
     row.append(head);
@@ -187,6 +257,8 @@ document.addEventListener("keydown",e=>{
 $("lightbox").addEventListener("click",()=>$("lightbox").classList.remove("on"));
 fetch(MANIFEST,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("HTTP "+r.status);return r.json()}).then(m=>{
   M=m;
+  return fetch(SCORES,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(sc=>{S=sc;return m});
+}).then(m=>{
   const sp=new Set(),ct=new Set();
   for(const s of m.samples){sp.add(s.split);ct.add(s.category)}
   for(const v of [...sp].sort())$("split").append(new Option(v,v));

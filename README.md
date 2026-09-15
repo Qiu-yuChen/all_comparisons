@@ -22,6 +22,39 @@ inference replicate (r0)** and the **same 8 view indices**, so cells align exact
 | 9 | 3DTopia-XL | `THREEDTOPIA_XL_T23D` |
 | 10 | Hunyuan3D-2 (FR40K accelerated) | `HUNYUAN3D2_FR40K_ACCEL_V1` |
 
+## Scores
+
+Two extra data files carry the numeric side, read straight from the frozen evaluation artefacts
+(nothing recomputed, nothing zero-filled):
+
+- `scores.json` — per-prompt `CLIP12 average` and `CLIP12 best-view` (plus Uni3D) for all 1536
+  frozen prompts × the 10 methods above, keyed by `sample_id`, with `sample_meta` for split /
+  category / gallery membership.
+- `scores_aggregate.json` — the full aggregate set: overall and paired statistics, per-category and
+  per-split breakdowns, OURS seed detail, and coverage.
+
+The gallery page shows the current prompt's CLIP in every method header plus a per-prompt leaderboard.
+`scores.html` (link: **全部得分结果**) is the full score board:
+
+| tab | content |
+|---|---|
+| 总览 | every method × CLIP avg / CLIP best / Uni3D, with median, quartiles, std, coverage |
+| 配对对比 | Δ = OURS − method with the archived paired-bootstrap 95% CI and win/loss/tie counts |
+| 分类 / 划分 | CLIP avg broken down by the 8 categories and the 6 test splits |
+| OURS 两种口径 | fixed reference seed vs post-hoc best-of-3-seed oracle, per-seed detail, seed-pick counts |
+| 逐 prompt 明细 | sortable/searchable table of all 1536 prompts × 10 methods |
+| 口径与来源 | definitions, provenance paths, quarantine and applicability notes |
+
+### OURS under two conventions
+
+| convention | branch | CLIP12 avg ×100 | CLIP12 best ×100 | Uni3D |
+|---|---|---|---|---|
+| **A — fixed reference (paper convention)** | `OURS-seed2027-step12000` | 30.2076 | 32.0135 | 0.1940 |
+| **B — best-of-3-seed oracle (post-hoc upper bound)** | per-prompt per-metric max over seeds 2026/2027/2028 | 30.8518 | 32.6816 | 0.2071 |
+
+Convention A is the only reference used for any claim; convention B is a post-hoc, metric-wise
+oracle kept only as an upper bound and must not be quoted as an OURS result.
+
 ## Scope and caveats
 
 - **1522 samples** = the intersection of the frozen 1536-prompt test set on which *all ten* methods
@@ -42,10 +75,14 @@ inference replicate (r0)** and the **same 8 view indices**, so cells align exact
 ## Layout
 
 ```
-index.html        gallery UI (search / split / category filters, per-method validity badges)
-manifest.json     sample list, method registry, validity map
+index.html                gallery UI (search / split / category filters, per-method CLIP + validity badges)
+scores.html               score board (all metrics, OURS two conventions, per-prompt detail)
+manifest.json             sample list, method registry, validity map
+scores.json               per-prompt CLIP/Uni3D for all 1536 prompts x 10 methods
+scores_aggregate.json     aggregate statistics behind scores.html
 img/<method>/<case>_r0.webp     one 1024x544 sheet per method per sample (1522 x 10 = 15,220 files)
 ```
 
 Generated from the frozen unified name map + record name map of the comparison campaign
-(`comparison_figure_handoff_20260915`). Read-only w.r.t. all experiment outputs.
+(`comparison_figure_handoff_20260915`) and from the archived per-prompt metric files of the
+evaluation campaign. Read-only w.r.t. all experiment outputs.
