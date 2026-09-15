@@ -22,12 +22,28 @@
  "cohort_scope": "aligned intersection: every listed method has all 12 views at replicate 0",
  "methods": [
   {
+   "id": "ours_s2026",
+   "group": "cloud_native",
+   "host": "h100",
+   "display": "OURS (seed2026)",
+   "baseline_id": "OURS-seed2026-step12000",
+   "path_template": "img/ours_s2026/{case}_r0.webp"
+  },
+  {
    "id": "ours",
    "group": "cloud_native",
    "host": "h100",
-   "display": "OURS (AfterImage3D)",
+   "display": "OURS (seed2027)",
    "baseline_id": "OURS-seed2027-step12000",
    "path_template": "img/ours/{case}_r0.webp"
+  },
+  {
+   "id": "ours_s2028",
+   "group": "cloud_native",
+   "host": "h100",
+   "display": "OURS (seed2028)",
+   "baseline_id": "OURS-seed2028-step12000",
+   "path_template": "img/ours_s2028/{case}_r0.webp"
   },
   {
    "id": "base",
@@ -12373,5 +12389,11 @@
    300
   ]
  },
- "published_at": "https://qiu-yuchen.github.io/all_comparisons/"
+ "published_at": "https://qiu-yuchen.github.io/all_comparisons/",
+ "reference_column": "ours",
+ "additional_seed_columns": [
+  "ours_s2026",
+  "ours_s2028"
+ ],
+ "validity_source": "per_prompt_v2.json (authoritative corrected per-result); the legacy `invalid` map below is pre-correction and under-reports invalidity -- kept for provenance only"
 }

@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Metrics board · 全指标总表与核心指标排名</title>
+<meta name="description" content="All metrics for the ten-method test-set comparison: CLIP12, Uni3D, per-item-corrected ULIP, teacher-referenced occupancy IoU / F1 / Chamfer / silhouette IoU, and PSNR / SSIM / LPIPS against the Teacher-IT render. Every column is sortable.">
+<style>
+:root{--ink:#15202b;--muted:#64748b;--line:#d8e0e8;--bg:#f4f7fa;--accent:#115e59;--ours:#b42318;--oursbg:#fff3f1;--ext:#7c2d12;--warn:#b45309;--na:#94a3b8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13.5px/1.5 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+header{background:#102a43;color:#fff;padding:14px 22px}
+header h1{margin:0 0 5px;font-size:19px}
+header p{margin:0;color:#cfe3f3;font-size:12.5px;max-width:1180px}
+header a{color:#8fd3ff}
+.navlink{display:inline-block;margin:7px 8px 0 0;background:#1d4ed8;color:#fff;text-decoration:none;font-size:12.5px;font-weight:650;padding:5px 11px;border-radius:7px}
+.navlink:hover{background:#1e40af}
+main{padding:14px 22px 90px;max-width:1760px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:10;border-bottom:1px solid var(--line)}
+.tabs button{font:inherit;font-size:13px;padding:6px 12px;border:1px solid #9fb0c0;border-radius:8px;background:#fff;cursor:pointer;color:#334e68}
+.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:650}
+.panel{display:none}.panel.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:14px}
+.card h2{margin:0 0 4px;font-size:16px}
+.card h2 small{font-weight:400;color:var(--muted);font-size:12.5px}
+.card h3{margin:16px 0 6px;font-size:14px;color:#334e68}
+.lead{font-size:12.5px;color:var(--muted);line-height:1.7;margin:6px 0 10px}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:6px 9px;border-bottom:1px solid #eaeff4;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+th{background:#f7fafc;color:#334e68;font-weight:650;position:sticky;top:0;z-index:2;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:1}
+th:first-child{background:#f7fafc;z-index:3}
+tbody tr:hover td{background:#f9fcfe}
+tbody tr:hover td:first-child{background:#f2f8fc}
+tr.me td{background:var(--oursbg);font-weight:700}
+tr.me td:first-child{background:var(--oursbg)}
+tr.sec td{background:#eef4f9;font-weight:700;color:#28455f;text-align:left}
+tr.sec td:first-child{background:#eef4f9}
+.pos{color:#8a2318;font-weight:650}
+.neg{color:#3f5668}
+.dim{color:#94a3b8}
+.na{color:var(--na);font-style:italic}
+.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:99px;background:#eef4f9;color:#3f5668;margin-left:5px}
+.tag.r{background:#fdeceb;color:#8a2318;font-weight:650}
+.tag.e{background:#fdece0;color:var(--ext)}
+.tag.v{background:#e7f0ff;color:#1d4ed8}
+.tag.s{background:#f0fdf4;color:#166534}
+.tag.q{background:#fff7e6;color:#b45309}
+.ctrlrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 10px}
+.ctrlrow button{font:inherit;font-size:12.5px;padding:5px 10px;border:1px solid #9fb0c0;border-radius:7px;background:#fff;cursor:pointer;color:#334e68}
+.ctrlrow button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ctrlrow input,.ctrlrow select{font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid #9fb0c0;border-radius:7px;background:#fff}
+.bar{display:inline-block;height:8px;background:var(--ours);border-radius:99px;vertical-align:middle}
+.bar.gray{background:#9db4c8}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{background:#eef4f9}
+th.on{background:#e6fffa;color:#0f766e}
+th .ar{font-size:10.5px;color:#0f766e;margin-left:2px}
+td.hl{background:#f0fbf9}
+th.hl{background:#e6fffa;color:#0f766e}
+.note{font-size:12.5px;color:var(--muted);line-height:1.75}
+.note b{color:var(--ink)}
+.note code{background:#f1f5f9;padding:1px 5px;border-radius:4px;font-size:12px}
+.legend{font-size:12px;color:var(--muted);margin-top:8px}
+.kpi{display:flex;flex-wrap:wrap;gap:12px;margin:2px 0 12px}
+.kpi div{background:#f7fafc;border:1px solid var(--line);border-radius:9px;padding:8px 13px;min-width:120px}
+.kpi .k{font-size:11.5px;color:var(--muted)}
+.kpi .v{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.rk{color:var(--muted);text-align:right}
+.mono{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<header>
+  <h1>Metrics board · 全指标总表</h1>
+  <p>十个方法在冻结测试集上的<b>全部指标</b>：CLIP12 / Uni3D、<b>逐条修正的 ULIP</b>、以 <b>Teacher-IT</b> 为参考的几何指标（占用 IoU / F1 / Precision / Recall、各对齐档位的 Chamfer、轮廓 IoU、法向余弦、深度误差）与图像指标（<b>PSNR / SSIM / LPIPS</b>）。<b>每一列表头都可点击排序</b>。所有数值读自已归档的评测产物，未重算任何指标、未重跑推理。 <a href="https://qiu-yuchen.github.io/">← qiu-yuchen.github.io</a></p>
+  <a class="navlink" href="index.html">← 10 方法对齐图库</a>
+  <a class="navlink" href="scores.html">CLIP / Uni3D 得分榜</a>
+</header>
+<main>
+  <div class="tabs" id="tabs">
+    <button data-t="rank" class="on">核心指标排名 · 按大小排序</button>
+    <button data-t="matrix">全指标矩阵</button>
+    <button data-t="paired">配对对比 · Δ vs OURS</button>
+    <button data-t="prompt">逐 prompt 明细</button>
+    <button data-t="notes">口径与来源</button>
+  </div>
+
+  <section class="panel on" id="p-rank">
+    <div class="card">
+      <h2>核心指标排名 <small>— 选一个指标，14 个方法按该指标从好到差重排</small></h2>
+      <div class="kpi" id="kpi"></div>
+      <div class="ctrlrow">
+        <span style="font-size:12.5px;color:var(--muted)">排序指标</span>
+        <select id="rkMetric"></select>
+        <button id="rkDir">最好在前 ↓</button>
+        <span style="font-size:12.5px;color:var(--muted);margin-left:8px">范围</span>
+        <button data-scope="all" class="on">全部 14</button>
+        <button data-scope="methods">不含 Teacher（12）</button>
+        <button data-scope="native">仅原生 7</button>
+        <button data-scope="external">仅外部 7</button>
+      </div>
+      <div class="tblwrap"><table id="rkTable"></table></div>
+      <div class="legend" id="rkLegend"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-matrix">
+    <div class="card">
+      <h2>全指标矩阵 <small>— 行 = 方法，列 = 指标；点列表头即按该指标排序</small></h2>
+      <div class="ctrlrow" id="mgGroup"></div>
+      <div class="tblwrap"><table id="mgTable"></table></div>
+      <div class="note" style="margin-top:10px" id="mgNote"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-paired">
+    <div class="card">
+      <h2>配对对比 <small>— OURS（固定参考 OURS-seed2027-step12000）− 该方法，逐 prompt 配对</small></h2>
+      <div class="ctrlrow">
+        <span style="font-size:12.5px;color:var(--muted)">指标</span>
+        <select id="pmMetric"></select>
+        <button id="pmDir">Δ 从大到小 ↓</button>
+      </div>
+      <div class="tblwrap"><table id="pmTable"></table></div>
+      <div class="note" style="margin-top:10px" id="pmNote"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-prompt">
+    <div class="card">
+      <h2>逐 prompt 明细 <small>— 1536 条冻结提示词 × 14 个方法</small></h2>
+      <div class="ctrlrow">
+        <input id="pq" placeholder="搜索样本 ID / 划分 / 分类" autocomplete="off" style="min-width:230px">
+        <span style="font-size:12.5px;color:var(--muted)">指标</span>
+        <select id="pMetric"></select>
+        <span style="font-size:12.5px;color:var(--muted);margin-left:8px">先按</span>
+        <select id="pSortMethod"><option value="">（不排）</option></select>
+        <button id="pDir">最好在前 ↓</button>
+        <span class="legend" id="pcount"></span>
+      </div>
+      <div class="tblwrap"><table id="pTable"></table></div>
+      <div class="note" style="margin-top:8px" id="pNote"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-notes">
+    <div class="card">
+      <h2>口径与来源</h2>
+      <div class="note" id="provNote"></div>
+    </div>
+  </section>
+</main>
+<script>
+"use strict";
+const MB="metrics_v2.json",PP="per_prompt_v2.json";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const CORE=["clip12_average","clip12_best","uni3d","ulip_corrected","ss_iou","ss_f1","ss_native_chamfer","mesh_chamfer",
+  "silhouette_iou","normal_cosine","depth_error","psnr_teacher","ssim_teacher","lpips_teacher","connected_components",
+  "nonmanifold_edges","render_valid_rate","runtime_seconds","ulip_frozen"];
+const DIRNAME={higher:"越高越好",lower:"越低越好",closer_to_1:"越接近 1 越好",neutral:"仅参考"};
+const GROUPNAME={semantic:"语义 / 文本对齐",quarantined:"隔离指标（不得引用）",teacher_geometry:"Teacher 几何（仅原生分支）",
+  teacher_image:"Teacher 图像（PSNR / SSIM / LPIPS）",shape:"形状健康度与开销"};
+const SECTION={reference:"参考",internal:"同实验内部分支",external:"外部基线",ours:"OURS"};
+const REF="OURS-seed2027-step12000";
+
+let M=null,P=null,MAP={},ridx={};
+let rkKey="clip12_average",rkBest=true,rkScope="all";
+let mgGroup="semantic",mgSort=null,mgBest=true;
+let pmKey="clip12_average",pmBest=true;
+let pMetric="clip12_average",pSortM="",pBest=true;
+
+function fmt(v,m){
+  if(v==null||!isFinite(v))return "—";
+  const x=v*((m&&m.scale)||1),a=Math.abs(x);
+  if(a>=1000)return x.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0});
+  if(a>=100)return x.toFixed(2);
+  if(a>=10)return x.toFixed(3);
+  return x.toFixed(4);
+}
+function fmtS(v,m){if(v==null||!isFinite(v))return "—";return (v>0?"+":"")+fmt(v,m)}
+function head(label,key,active,best,d,extra){
+  return `<th class="sortable${active?" on":""}" data-k="${key}"${extra||""}>${esc(label)}`
+    +(active?`<span class="ar">${best?"↑最好":"↓最好"}</span>`:"")+`</th>`;
+}
+function mgroupOf(m){return m.kind==="external"?"external":"native"}
+/* scope: 'native' metrics are only defined for the 7 native branches */
+function cellStatus(metricKey,method){
+  const m=MAP[metricKey];
+  const native=m.scope==="native";
+  if(metricKey==="ulip_corrected"&&method.kind==="external")
+    return {text:"未修正",cls:"na",title:"外部基线的 ULIP 仍处隔离（quarantine）：冻结管线用 point batch=8，PointBERT 特征被合批污染；本次只对 7 个原生分支做了逐条修正"};
+  if(m.group==="teacher_image"&&method.id==="TEACHER-IT")
+    return {text:"参考",cls:"na",title:"Teacher-IT 本身就是参考渲染，PSNR/SSIM/LPIPS 对它没有定义（自比恒为 SSIM 1、LPIPS 0）"};
+  if(native&&method.kind==="external")return {text:"不适用",cls:"na",title:"外部基线没有 Teacher 几何参考，该指标未采集"};
+  if((metricKey==="uni3d"||metricKey==="ulip_corrected"||metricKey==="ulip_frozen")&&method.id==="lgm")
+    return {text:"N/A",cls:"na",title:"LGM 为高斯表示，没有可采样点云，点云-文本指标（Uni3D / ULIP）在该评测范围不适用，不填 0"};
+  return null;
+}
+function agg(id,key){return (M.aggregates[id]||{})[key]||null}
+
+/* ---------- core-metric ranking ---------- */
+function buildRank(){
+  const t=$("rkTable");
+  const m=MAP[rkKey];
+  const inScope=x=>rkScope==="all"?true:
+    rkScope==="native"?mgroupOf(x)==="native":
+    rkScope==="external"?mgroupOf(x)==="external":
+    (x.id!=="TEACHER-IT"&&x.id!=="TEACHER-II");
+  const list=M.methods.filter(inScope);
+  const rows=list.map(x=>({m:x,a:agg(x.id,rkKey),p:(M.paired_vs_reference[x.id]||{})[rkKey]||null}));
+  const ord=d=>{const val=o=>o.a?o.a.mean:null;
+    return (A,B)=>{const va=val(A),vb=val(B);
+      if(va==null&&vb==null)return 0;if(va==null)return 1;if(vb==null)return -1;
+      let r;
+      if(m.direction==="lower")r=va-vb;
+      else if(m.direction==="closer_to_1")r=Math.abs(va-1)-Math.abs(vb-1);
+      else r=vb-va;
+      return rkBest?r:-r;
+    }};
+  rows.sort(ord());
+  const present=rows.map(o=>o.a&&o.a.mean).filter(v=>v!=null);
+  const lo=present.length?Math.min(...present):null,hi=present.length?Math.max(...present):null;
+  const ref=agg(REF,rkKey);const refv=ref?ref.mean:null;
+  let html=`<thead><tr><th>#</th><th>方法</th><th>类型</th><th>${esc(m.label)}</th>`
+    +`<th>中位数</th><th>P25</th><th>P75</th><th>标准差</th><th>n</th>`
+    +`<th>OURS − 方法 <small>(配对)</small></th><th>胜/负/平</th><th>相对参考</th></tr></thead><tbody>`;
+  let rank=0;
+  for(const o of rows){
+    const a=o.a;
+    if(a)rank++;
+    const d=o.p?o.p.delta_mean:null;
+    const isRef=o.m.id===REF;
+    const st=cellStatus(rkKey,o.m);
+    const v=a?fmt(a.mean,m):(st?`<span class="${st.cls}" title="${esc(st.title)}">${st.text}</span>`:`<span class="dim">—</span>`);
+    html+=`<tr class="${isRef?"me":""}"><td class="rk">${a?rank:"—"}</td>`
+      +`<td>${esc(o.m.label)}</td>`
+      +`<td><span class="tag ${o.m.kind==="external"?"e":isRef?"r":o.m.group==="ours"?"v":""}">${esc(SECTION[o.m.group]||o.m.group)}</span></td>`
+      +`<td><b>${v}</b></td>`
+      +`<td>${a?fmt(a.median,m):"—"}</td><td>${a?fmt(a.p25,m):"—"}</td><td>${a?fmt(a.p75,m):"—"}</td>`
+      +`<td>${a?fmt(a.std,m):"—"}</td><td>${a?a.n:"0"}</td>`
+      +`<td class="${d!=null&&(m.direction==="lower"?d<0:d>0)?"pos":"neg"}">${isRef?"基准":(d==null?"—":fmtS(d,m))}</td>`
+      +`<td>${o.p?`${o.p.wins} / ${o.p.losses} / ${o.p.ties}`:"—"}</td>`
+      +`<td>${bar(a?a.mean:null,lo,hi,refv,m)}</td></tr>`;
+  }
+  t.innerHTML=html+"</tbody>";
+  const n=present.length;
+  $("rkLegend").innerHTML=`<b>${esc(m.label)}</b> · ${DIRNAME[m.direction]||m.direction}${rkKey==="ulip_frozen"?' · <span style="color:#b45309">隔离指标：点云合批污染，仅作对照，不得用于排名或论文</span>':""}`
+    +`；参与排序 ${n} / ${list.length} 个方法（无有效值者排在最后并显示为 <span class="dim">—</span> 或 <span class="na">不适用</span>）。`
+    +`末列条形按 ${n} 个有效值的极差归一，<span class="bar" style="width:34px"></span> 为固定参考 OURS-seed2027-step12000 的位置（${fmt(refv,m)}）。`
+    +`<br>Δ = <b>OURS − 方法</b>，在双方共同有效的 prompt 上配对计算；胜/负/平按 Δ 符号统计。`;
+}
+function bar(v,lo,hi,refv,m){
+  if(v==null)return "—";
+  const f=v*((m&&m.scale)||1);
+  if(lo==null||hi==null||hi<=lo)return `<span class="bar" style="width:45px"></span>`;
+  const w=Math.max(10,Math.min(100,12+88*(f-lo)/(hi-lo)));
+  const better=m.direction==="lower"?(refv!=null&&f<refv):m.direction==="closer_to_1"?(refv!=null&&Math.abs(f-1)<Math.abs(refv*((m&&m.scale)||1)-1)):(refv!=null&&f>refv*((m&&m.scale)||1));
+  return `<span class="bar${better?"":" gray"}" style="width:${w.toFixed(0)}px"></span>`;
+}
+
+/* ---------- full matrix ---------- */
+function buildMatrix(){
+  const keys=M.metrics.filter(x=>x.group===mgGroup).map(x=>x.key);
+  if(mgSort&&!keys.includes(mgSort))mgSort=null;
+  const keysOrder=mgSort?[mgSort,...keys.filter(k=>k!==mgSort)]:keys;
+  const kinds=["ours","internal","external"];
+  let html=`<thead><tr><th>方法</th><th>类型</th>`
+    +keysOrder.map(k=>head(MAP[k].label,k,mgSort===k,mgBest,null,
+        mgSort===k?' class="sortable on"':'')).join("")+`</tr></thead><tbody>`;
+  for(const g of kinds){
+    const ms=M.methods.filter(x=>x.group===g);
+    if(!ms.length)continue;
+    let list=ms.map(x=>({m:x,a:agg(x.id,mgSort||keysOrder[0])}));
+    if(mgSort){
+      const m=MAP[mgSort];
+      list.sort((A,B)=>{
+        const va=(agg(A.m.id,mgSort)||{}).mean,vb=(agg(B.m.id,mgSort)||{}).mean;
+        if(va==null&&vb==null)return 0;if(va==null)return 1;if(vb==null)return -1;
+        let r;
+        if(m.direction==="lower")r=va-vb;
+        else if(m.direction==="closer_to_1")r=Math.abs(va-1)-Math.abs(vb-1);
+        else r=vb-va;
+        return mgBest?r:-r;
+      });
+    }
+    html+=`<tr class="sec"><td colspan="${keysOrder.length+2}">${esc(SECTION[g]||g)}</td></tr>`;
+    for(const o of list){
+      const isRef=o.m.id===REF;
+      html+=`<tr class="${isRef?"me":""}"><td>${esc(o.m.label)}</td>`
+        +`<td><span class="tag ${o.m.kind==="external"?"e":isRef?"r":o.m.group==="ours"?"v":""}">${esc(SECTION[o.m.group]||o.m.group)}</span></td>`;
+      for(const k of keysOrder){
+        const a=agg(o.m.id,k);const mm=MAP[k];const st=cellStatus(k,o.m);
+        const cell=a?`<b>${fmt(a.mean,mm)}</b><span class="dim"> n=${a.n}</span>`
+          :(st?`<span class="${st.cls}" title="${esc(st.title)}">${st.text}</span>`:`<span class="dim">—</span>`);
+        html+=`<td class="${mgSort===k?"hl":""}" title="${esc(mm.label)} · ${DIRNAME[mm.direction]||""}${mm.note?" · "+esc(mm.note):""}">${cell}</td>`;
+      }
+      html+="</tr>";
+    }
+  }
+  $("mgTable").innerHTML=html+"</tbody>";
+  $("mgNote").innerHTML=`<b>${esc(GROUPNAME[mgGroup]||mgGroup)}</b>：表内为各方法在冻结测试集上的聚合<b>均值</b>（n = 该指标上有效 prompt 数）。点击任意<b>列表头</b>即按该指标重排，再点一次反向。`
+    +`<br>标 <span class="na">不适用</span> 表示该指标在协议上对外部基线<b>没有定义</b>（没有 Teacher 几何参考，或 LGM 的高斯表示不适用点指标）——这与「缺失」不同，也不同于填 0。`
+    +(mgGroup==="quarantined"?`<br><span style="color:#b45309"><b>本组为隔离指标</b>：旧 ULIP 参考（点云 batch=8）受 PointBERT 合批污染，保留在此仅供对照，<b>不得</b>用于排名、结论或论文。</span>`:"");}
+
+/* ---------- paired ---------- */
+function buildPaired(){
+  const m=MAP[pmKey],t=$("pmTable");
+  const list=M.methods.filter(x=>x.id!==REF)
+    .map(x=>({m:x,p:(M.paired_vs_reference[x.id]||{})[pmKey]||null}));
+  list.sort((A,B)=>{
+    const va=A.p?A.p.delta_mean:null,vb=B.p?B.p.delta_mean:null;
+    if(va==null&&vb==null)return 0;if(va==null)return 1;if(vb==null)return -1;
+    // delta is always OURS - method; "best for OURS" depends on the metric direction
+    let r;
+    if(m.direction==="lower")r=vb-va;
+    else if(m.direction==="closer_to_1")r=Math.abs(vb)-Math.abs(va);
+    else r=va-vb;
+    return pmBest?r:-r;
+  });
+  let html=`<thead><tr><th>方法</th><th>类型</th><th>配对 prompt</th><th>OURS</th><th>方法</th>`
+    +`<th>Δ = OURS − 方法</th><th>中位 Δ</th><th>95% CI</th><th>胜</th><th>负</th><th>平</th><th>CI 来源</th></tr></thead><tbody>`;
+  for(const o of list){
+    if(!o.p){html+=`<tr><td>${esc(o.m.label)}</td>`
+      +`<td><span class="tag ${o.m.kind==="external"?"e":o.m.group==="ours"?"v":""}">${esc(SECTION[o.m.group]||o.m.group)}</span></td>`
+      +`<td colspan="10" class="dim">该指标不适用或未采集</td></tr>`;continue}
+    const p=o.p,ci=p.ci95?`[${fmtS(p.ci95[0],m)}, ${fmtS(p.ci95[1],m)}]`:"—";
+    const good=m.direction==="lower"?p.delta_mean<0:p.delta_mean>0;
+    html+=`<tr><td>${esc(o.m.label)}</td>`
+      +`<td><span class="tag ${o.m.kind==="external"?"e":o.m.group==="ours"?"v":""}">${esc(SECTION[o.m.group]||o.m.group)}</span></td>`
+      +`<td>${p.n}</td><td>${fmt(p.ours_mean,m)}</td><td>${fmt(p.method_mean,m)}</td>`
+      +`<td class="${good?"pos":"neg"}"><b>${fmtS(p.delta_mean,m)}</b></td>`
+      +`<td>${fmtS(p.delta_median,m)}</td><td>${ci}</td>`
+      +`<td>${p.wins}</td><td>${p.losses}</td><td>${p.ties}</td>`
+      +`<td>${p.ci95?"归档 bootstrap":"—"}</td></tr>`;
+  }
+  t.innerHTML=html+"</tbody>";
+  const ae=M.archived_external_paired||{};
+  const cov=Object.values(ae.coverage||{}).flat();
+  $("pmNote").innerHTML=`单位是「每 prompt 恰好两条有效推理重复的均值」；配对 prompt 数 = 双方在该指标上共同有效的 prompt 数，因此逐行不同，<b>不构成同一子集上的全方法排名</b>。<br>`
+    +`Δ 恒为 <b>OURS 固定参考 − 该方法</b>；因为不同指标的「好」方向不同（${esc(m.label)} 是「${DIRNAME[m.direction]||"—"}」），胜负栏仍按 Δ 的符号统计，本页只用颜色标示对 OURS 有利/不利。<br>`
+    +`<b>95% CI 的覆盖范围极其有限：</b>只有 7 个外部基线的 ${cov.length?esc([...new Set(cov)].join(" / ")):"clip12_average / clip12_best / uni3d"} 有<b>归档的配对 bootstrap</b>`
+    +`（10000 次，见 <code>FINAL_COMPARISON_TABLE.json</code>）。<br>`
+    +`<b>ULIP 被归档表显式排除</b>（<code>excluded_metrics</code>），Teacher 几何与 PSNR/SSIM/LPIPS 从未做过配对 bootstrap，`
+    +`内部与 OURS 分支也没有归档区间 —— 这些行一律显示 “—”，其 Δ 与胜负是<b>描述性</b>的，<b>本页未为任何新指标新造区间</b>。`;
+}
+
+/* ---------- per prompt ---------- */
+function buildPromptTable(){
+  const ids=P.methods;
+  const mi=P.metrics.indexOf(pMetric);
+  const q=$("pq").value.trim().toLowerCase();
+  let list=[];
+  for(const [sid,row] of Object.entries(P.rows)){
+    const meta=P.meta[sid]||{};
+    const hay=(sid+" "+(meta.case_id||"")+" "+(meta.split||"")+" "+(meta.category||"")).toLowerCase();
+    if(q&&!hay.includes(q))continue;
+    list.push({sid,meta,v:row[pMetric]||ids.map(()=>null)});
+  }
+  /* fall back to a neutral descriptor if the metric is absent from the registry,
+     so an unexpected <select> value can never take the whole table down */
+  const m=MAP[pMetric]||{direction:"higher",scale:1,label:pMetric,group:""};
+  /* Sort key: closer_to_1 metrics rank by distance from 1, everything else by raw value.
+     `r` below is built best-first and only flipped when the toggle asks for worst-first,
+     matching the ranking / matrix tabs.  Missing values always sink to the bottom. */
+  const pkey=v=>m.direction==="closer_to_1"?Math.abs(v-1):v;
+  if(pSortM){
+    const j=ids.indexOf(pSortM);
+    list.sort((A,B)=>{
+      const a=A.v[j],b=B.v[j];
+      if(a==null&&b==null)return A.sid<B.sid?-1:1;
+      if(a==null)return 1;if(b==null)return -1;
+      const r=(m.direction==="higher"||m.direction==="neutral")
+        ? pkey(b)-pkey(a)      // larger value is better
+        : pkey(a)-pkey(b);     // lower / closer-to-1: smaller key is better
+      return pBest?r:-r;
+    });
+  }else{
+    list.sort((A,B)=>A.sid<B.sid?-1:A.sid>B.sid?1:0);
+  }
+  let html=`<thead><tr><th>样本</th><th>划分</th><th>分类</th>`
+    +ids.map(i=>{
+        const mm=M.methods.find(x=>x.id===i)||{};
+        const active=pSortM===i;
+        return `<th class="sortable${i===REF?" colref":""}${active?" on":""}" data-s="${i}">${esc(mm.label||i)}`
+          +`${active?`<span class="ar" title="${pBest?"最好在前":"最差在前"}">${pBest?"↓":"↑"}</span>`:""}</th>`;
+      }).join("")
+    +`</tr></thead><tbody>`;
+  for(const r of list){
+    const vals=r.v;
+    const nums=vals.filter(v=>v!=null&&isFinite(v));
+    const mx=nums.length?Math.max(...nums):null;
+    html+=`<tr><td title="${esc(r.sid)}">${esc(r.meta.case_id||r.sid)}</td>`
+      +`<td class="dim">${esc(r.meta.split||"—")}</td><td class="dim">${esc(r.meta.category||"—")}</td>`;
+    ids.forEach((id,i)=>{
+      const v=vals[i];const mm=M.methods.find(x=>x.id===id)||{};
+      const st=cellStatus(pMetric,mm);
+      const cell=v==null||!isFinite(v)?(st?`<span class="${st.cls}" title="${esc(st.title)}">${st.text}</span>`:`<span class="dim">—</span>`):fmt(v,m);
+      const isBest=v!=null&&mx!=null&&Math.abs(v-mx)<1e-12;
+      html+=`<td class="${id===REF?"colref pos":""}" ${isBest?'style="font-weight:700"':""}>${cell}</td>`;
+    });
+    html+="</tr>";
+  }
+  $("pTable").innerHTML=html+"</tbody>";
+  $("pcount").textContent=`显示 ${list.length} / ${Object.keys(P.rows).length} 条`;
+}
+
+/* ---------- wiring ---------- */
+function showTab(name){
+  const btn=document.querySelector(`#tabs button[data-t="${name}"]`);
+  if(!btn)return;
+  document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===btn));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id==="p-"+name));
+}
+document.querySelectorAll("#tabs button").forEach(b=>b.addEventListener("click",()=>{
+  showTab(b.dataset.t);
+  if(location.hash!=="#"+b.dataset.t)history.replaceState(null,"","#"+b.dataset.t);
+}));
+window.addEventListener("hashchange",()=>showTab(location.hash.slice(1)||"rank"));
+
+$("rkMetric").addEventListener("change",e=>{rkKey=e.target.value;buildRank()});
+$("rkDir").addEventListener("click",e=>{rkBest=!rkBest;e.target.textContent=rkBest?"最好在前 ↓":"最差在前 ↑";buildRank()});
+document.querySelectorAll("[data-scope]").forEach(b=>b.addEventListener("click",()=>{
+  rkScope=b.dataset.scope;
+  document.querySelectorAll("[data-scope]").forEach(x=>x.classList.toggle("on",x===b));
+  buildRank();
+}));
+$("mgTable").addEventListener("click",e=>{
+  const th=e.target.closest("th[data-k]");if(!th)return;
+  const k=th.dataset.k;
+  if(mgSort===k)mgBest=!mgBest;else{mgSort=k;mgBest=true}
+  buildMatrix();
+});
+$("pmMetric").addEventListener("change",e=>{pmKey=e.target.value;buildPaired()});
+$("pmDir").addEventListener("click",e=>{pmBest=!pmBest;e.target.textContent=pmBest?"Δ 从大到小 ↓":"Δ 从小到大 ↑";buildPaired()});
+$("pq").addEventListener("input",buildPromptTable);
+$("pMetric").addEventListener("change",e=>{pMetric=e.target.value;pSortM="";pBest=true;$("pSortMethod").value="";$("pDir").textContent=pDirLabel();buildPromptTable()});
+$("pSortMethod").addEventListener("change",e=>{pSortM=e.target.value;pBest=true;$("pDir").textContent=pDirLabel();buildPromptTable()});
+function pDirLabel(){const m=MAP[pMetric];
+  if(!m)return "—";
+  if(m.direction==="neutral")return pBest?"数值降序 ↓":"数值升序 ↑";
+  if(m.direction==="closer_to_1")return pBest?"最接近 1 在前 ↓":"最远在前 ↑";
+  return pBest?"最好在前 ↓":"最差在前 ↑"}
+$("pDir").addEventListener("click",e=>{pBest=!pBest;e.target.textContent=pDirLabel();buildPromptTable()});
+$("pTable").addEventListener("click",e=>{
+  const th=e.target.closest("th[data-s]");if(!th)return;
+  const s=th.dataset.s;
+  if(pSortM===s)pBest=!pBest;else{pSortM=s;pBest=true}   // a new column always starts best-first
+  $("pSortMethod").value=pSortM;
+  $("pDir").textContent=pDirLabel();
+  buildPromptTable();
+});
+
+Promise.all([
+  fetch(MB,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("metrics_v2.json HTTP "+r.status);return r.json()}),
+  fetch(PP,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("per_prompt_v2.json HTTP "+r.status);return r.json()}),
+]).then(([mm,pp])=>{
+  M=mm;P=pp;
+  for(const x of M.metrics)MAP[x.key]=x;
+  // metric <select>s, grouped like the payload
+  const groups=[...new Set(M.metrics.map(x=>x.group))];
+  for(const sel of [["rkMetric",CORE],["pmMetric",M.metrics.map(x=>x.key)],["pMetric",P.metrics]]){
+    const el=$(sel[0]);el.replaceChildren();
+    for(const g of groups){
+      const inG=M.metrics.filter(x=>x.group===g&&sel[1].includes(x.key));
+      if(!inG.length)continue;
+      const og=document.createElement("optgroup");og.label=GROUPNAME[g]||g;
+      for(const x of inG){
+        const o=new Option(x.label+(x.note?" — "+x.note:""),x.key);
+        if(x.group==="quarantined")o.textContent=x.label+"（隔离，仅供对照）";
+        og.append(o);
+      }
+      el.append(og);
+    }
+    if(sel[0]==="rkMetric")el.value=rkKey;
+    if(sel[0]==="pmMetric")el.value=pmKey;
+    if(sel[0]==="pMetric")el.value=pMetric;
+  }
+  // group buttons on the matrix tab
+  const gb=$("mgGroup");gb.replaceChildren();
+  for(const g of groups){
+    const b=document.createElement("button");
+    b.textContent=GROUPNAME[g]||g;b.dataset.g=g;
+    if(g===mgGroup)b.className="on";
+    b.addEventListener("click",()=>{
+      mgGroup=g;mgSort=null;mgBest=true;
+      document.querySelectorAll("[data-g]").forEach(x=>x.classList.toggle("on",x===b));
+      buildMatrix();
+    });
+    gb.append(b);
+  }
+  // per-prompt method selector
+  const sm=$("pSortMethod");
+  for(const x of M.methods)sm.append(new Option(x.label,x.id));
+
+  const ref=agg(REF,"clip12_average");
+  const kpi=[["测试集 prompt",M.methods.length?1536:"—"],["方法数",M.methods.length],
+    ["OURS 配对有效 prompt",ref?ref.n:"—"],["OURS CLIP avg ×100",fmt(ref?ref.mean:null,MAP["clip12_average"])],
+    ["指标数",M.metrics.length],["参考分支",REF]];
+  const kb=$("kpi");kb.replaceChildren();
+  for(const [k,v] of kpi){const d=document.createElement("div");
+    d.innerHTML=`<div class="k">${esc(k)}</div><div class="v">${v}</div>`;kb.append(d)}
+
+  buildRank();buildMatrix();buildPaired();
+  buildPromptTable();
+  showTab(location.hash.slice(1)||"rank");
+  $("pNote").innerHTML=`表内数值按指标原始量纲显示（CLIP12 类 ×100）；<b>—</b> = 该 prompt 在该方法上没有有效结果（留空，不填 0、不重抽）；<span class="na">不适用</span> = 协议上未定义。`
+    +`点击<b>列首</b>即可按该方法的取值排序整张表，再点一次反向；也可用上方「先按」下拉在表外选方法。`
+    +`原始数据：<a href="metrics_v2.json">metrics_v2.json</a>（汇总 + 配对）、<a href="per_prompt_v2.json">per_prompt_v2.json</a>（逐 prompt）、<a href="scores.json">scores.json</a>（CLIP/Uni3D 旧表）、<a href="scores_aggregate.json">scores_aggregate.json</a>。`;
+  const pv=M.provenance||{};
+  $("provNote").innerHTML=`
+  <b>本页只做只读聚合：未重算任何已归档指标、未重跑推理、未改动分母。</b><br><br>
+  <b>ULIP（逐条修正）</b>：<code>${esc(pv.native_ulip_corrected||"")}</code><br>
+  旧列 <code>ulip_frozen</code> 用点云 <b>batch=8</b> 前向，PointBERT 特征被合批污染（点云支最大绝对差 0.2094，文本支 3.2e-7），因此一直处于隔离状态。修正版只把<b>一次前向的点云数改成 1</b>，采样器（sha256 定种）、质心与单位最大半径归一化、文本编码器、权重文件（sha256 <code>c4833a0b…59627</code>）与冻结管线完全一致；对独立审计的 6 条固定样本最大复现误差 6.4e-7。<br><br>
+  <b>Teacher 几何</b>：<code>${esc(pv.teacher_geometry||"")}</code><br>
+  参考分支是 <b>TEACHER-IT</b>。Chamfer 分四个对齐档位：原生坐标、仅对齐平移、对齐平移+尺度、对齐旋转；<code>mesh_chamfer</code> 是表面 10000 点的网格 Chamfer。<b>只有 7 个原生分支有这一组指标</b>，外部基线没有 Teacher 几何，显示 <span class="na">不适用</span>，不填 0。<br><br>
+  <b>Teacher 图像（PSNR / SSIM / LPIPS）</b>：<code>${esc(pv.teacher_image||"")}</code><br>
+  本协议<b>不存在 ground-truth 图像</b>，因此这三个指标度量的是与 <b>TEACHER-IT 同一 sample、同一推理重复、同一方位角渲染</b>的一致程度，不是对数据集真值的保真度。渲染契约在十个方法间完全一致（512px、distance 2.0、elev 20、fov 40、near 0.8、far 1.6、白底）。LPIPS 为 AlexNet v0.1。<br><br>
+  <b>原生逐 prompt 指标</b>：<code>${esc(pv.native_per_prompt||"")}</code>；外部基线：<code>${esc(pv.external_per_prompt||"")}</code><br><br>
+  <b>聚合单位</b>：${esc(M.unit)}<br><br>
+  <b>隔离与不适用</b>：旧 ULIP 参考仍隔离，本页只在「隔离指标」组里作为对照呈现，<b>不参与任何排名</b>；LGM 为高斯表示，点指标（Uni3D / ULIP）按当前评测范围不适用 → 一律 N/A。<br><br>
+  <b>Hunyuan 口径</b>：<code>HUNYUAN3D2_FR40K_ACCEL_V1</code> 的 CLIP 属于 FR40K 加速 Paint；Uni3D 来自简化前的原 Shape，不等于最终 FR40K 网格几何。<br><br>
+  <b>生成时间</b>：${new Date().toISOString()}（页面渲染）· 数据 schema <code>${esc(M.schema_version)}</code>`;
+}).catch(e=>{
+  document.querySelector("main").insertAdjacentHTML("afterbegin",
+    `<div class="card" style="color:#8a2318"><b>数据载入失败：</b>${esc(e.message)}</div>`);
+});
+</script>
+</body></html>

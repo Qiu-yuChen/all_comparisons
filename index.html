@@ -2,269 +2,508 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Test-set comparison · 10-way aligned gallery</title>
-<meta name="description" content="Aligned qualitative comparison on the frozen 1522-prompt test set: OURS (AfterImage3D), BASE, Teacher-II and 7 external text-to-3D baselines. 8 views per method, identical sample / replicate / view indices.">
+<title>测试集对照 · 10 方法 + OURS 三个训练 seed</title>
+<meta name="description" content="冻结 1522 条测试提示词上的对齐定性对照：原始 FLUX 输入、OURS 三个训练 seed、BASE、Teacher-II 与 7 个外部文生 3D 基线。同一行的样本、推理重复与视角索引逐格一致。">
 <style>
-:root{--ink:#15202b;--muted:#64748b;--line:#d8e0e8;--bg:#f4f7fa;--accent:#115e59;--ours:#b42318;--warn:#b45309;--ext:#7c2d12}
+:root{
+  --ink:#17202a; --muted:#5f6b7a; --line:#d3dae2; --bg:#eceef1; --panel:#fff;
+  --accent:#0f5f57; --ours:#b42318; --warn:#7a5d00; --ext:#7c2d12;
+  --good:#137333; --na:#7a5d00;
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
-header{background:#102a43;color:#fff;padding:14px 20px}
-header h1{margin:0 0 4px;font-size:19px}
-header p{margin:0;color:#cfe3f3;font-size:12.5px;max-width:1100px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.5 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+header{background:#102a43;color:#fff;padding:16px 20px}
+header h1{margin:0 0 6px;font-size:20px}
+header p{margin:0;color:#cfe3f3;font-size:12.5px;max-width:1200px}
 header a{color:#8fd3ff}
-.layout{display:grid;grid-template-columns:296px 1fr;align-items:start}
-aside{position:sticky;top:0;height:100vh;overflow:auto;background:#fff;border-right:1px solid var(--line);padding:12px}
-aside h2{margin:0 0 8px;font-size:14px;color:#334e68}
-aside input,aside select{width:100%;font:inherit;padding:7px 9px;border:1px solid #9fb0c0;border-radius:7px;margin-bottom:8px;background:#fff}
-#list{list-style:none;margin:0;padding:0;font-size:13px}
-#list li{padding:6px 8px;border-radius:6px;cursor:pointer;display:grid;grid-template-columns:52px 1fr;gap:6px;align-items:baseline}
-#list li:hover{background:#eef4f9}
-#list li.on{background:#e6fffa;font-weight:650}
-#list li .cid{font-variant-numeric:tabular-nums;color:#334e68}
-#list li .pp{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-main{padding:14px 18px 70px;min-width:0}
-.card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-bottom:12px}
-.head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between}
-.head h2{margin:0 0 4px;font-size:17px}
-.head .ids{color:var(--muted);font-size:12.5px}
-.prompt{margin:8px 0 0;font-size:17px;font-weight:600;line-height:1.35}
-.tags{margin-top:7px;font-size:12.5px;color:var(--muted)}
-.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
-.ctrl button{font:inherit;font-size:13px;padding:6px 10px;border:1px solid #9fb0c0;border-radius:7px;background:#fff;cursor:pointer}
-.ctrl button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-.ctrl label{font-size:13px;color:var(--muted)}
-.mrow{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:#fff;overflow:hidden}
-.mhead{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:7px 11px;background:#f7fafc;border-bottom:1px solid var(--line);font-size:13.5px}
-.mhead .name{font-weight:650}
-.mhead .bid{color:var(--muted);font-size:12px}
-.badge{border-radius:99px;padding:1px 8px;font-size:11.5px;background:#e6fffa;color:#115e59}
-.badge.bad{background:#fee4e2;color:#912018}
-.badge.ours{background:#fee4e2;color:#912018;font-weight:700}
-.badge.ext{background:#fdece0;color:var(--ext)}
-.sheetwrap{padding:8px}
-.sheetwrap img{display:block;width:100%;height:auto;border-radius:7px;background:#fff;cursor:zoom-in;border:1px solid #eef2f6}
-.note{font-size:12.5px;color:var(--muted);line-height:1.65}
-.note b{color:var(--ink)}
-.navlink{display:inline-block;margin-top:6px;background:#1d4ed8;color:#fff;text-decoration:none;font-size:13px;font-weight:650;padding:6px 12px;border-radius:7px}
+nav{margin-top:9px;display:flex;flex-wrap:wrap;gap:8px}
+.navlink{display:inline-block;background:#1d4ed8;color:#fff;text-decoration:none;
+  font-size:13px;font-weight:650;padding:6px 12px;border-radius:7px}
 .navlink:hover{background:#1e40af}
-.sc{font-variant-numeric:tabular-nums;font-size:12px;border-radius:6px;padding:1px 7px;background:#eef4f9;color:#28455f;border:1px solid #dbe6ef}
-.sc b{color:#0f172a}
-.sc.win{background:#fdeceb;color:#8a2318;border-color:#f3c6c1}
-.sc.lose{background:#eef4f9;color:#4a5f74}
-.scboard{margin-bottom:12px}
-.scboard .hd{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:8px}
-.scboard h3{margin:0;font-size:14.5px}
-.scboard .hint{font-size:12px;color:var(--muted)}
-.srow{display:grid;grid-template-columns:190px 92px 1fr 96px 1fr 30px;gap:8px;align-items:center;padding:3px 6px;border-radius:6px;font-size:12.5px}
-.srow:nth-child(odd){background:#fafcfe}
-.srow.me{background:#fff3f1;font-weight:700}
-.srow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.srow .vv{font-variant-numeric:tabular-nums;text-align:right;color:#1f3b57}
-.bar{height:9px;background:#e8eef4;border-radius:99px;overflow:hidden}
-.bar > i{display:block;height:100%;background:#9db4c8;border-radius:99px}
-.srow.me .bar > i{background:var(--ours)}
-.srow .dl{font-variant-numeric:tabular-nums;text-align:right;font-size:12px;color:var(--muted)}
-.srow .dl.up{color:#8a2318;font-weight:650}
-.srow .rk{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
-#lightbox{position:fixed;inset:0;background:#0b121999;display:none;align-items:center;justify-content:center;z-index:50;padding:24px}
+main{max-width:1900px;margin:0 auto;padding:14px 16px 80px}
+section.panel,.note,.overall,article.sample,.controls{background:var(--panel);
+  border-radius:10px;padding:14px;margin-bottom:14px}
+.note{background:#fff8dd;border:1px solid #d6a700}
+.note b{color:#3d2f00}
+/* ---------- controls ---------- */
+.controls{position:sticky;top:0;z-index:6;box-shadow:0 2px 10px #0002;
+  display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-bottom:14px}
+.controls label{font-size:12.5px;color:var(--muted);display:inline-flex;
+  align-items:center;gap:6px}
+.controls input,.controls select{font:inherit;font-size:13px;padding:5px 8px;
+  border:1px solid #9fb0c0;border-radius:7px;background:#fff}
+.controls input#q{min-width:240px}
+.controls button{font:inherit;font-size:13px;padding:6px 10px;border:1px solid #9fb0c0;
+  border-radius:7px;background:#fff;cursor:pointer}
+.controls button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.visible-count{font-weight:700;margin-left:auto;font-variant-numeric:tabular-nums}
+/* ---------- overall ---------- */
+.overall h2{margin:0 0 6px;font-size:16px}
+.overall p.sub{margin:0 0 10px;font-size:12.5px;color:var(--muted)}
+.table-scroll{overflow:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{background:#eaf3ff;font-size:12.5px;position:sticky;top:0}
+tbody tr:nth-child(even){background:#fafcfe}
+td.best{font-weight:750;color:var(--ours)}
+td.dim,th.dim{color:var(--muted)}
+td.na{color:var(--na)}
+td.dir{text-align:left;color:var(--muted);font-size:12px}
+/* ---------- cards ---------- */
+article.sample{padding:12px 14px}
+.chead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;
+  border-bottom:1px solid var(--line);padding-bottom:7px;margin-bottom:10px}
+.chead h2{margin:0;font-size:16.5px;font-variant-numeric:tabular-nums}
+.chead .cid{color:var(--muted);font-size:12.5px;font-weight:400}
+.cmeta{font-size:12.5px;color:var(--muted)}
+.cpos{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.reference-grid{display:grid;grid-template-columns:minmax(220px,300px) 1fr;
+  gap:12px;align-items:start;margin-bottom:12px}
+@media(max-width:900px){.reference-grid{grid-template-columns:1fr}}
+.flux-reference,.prompt-copy{background:#f5f6f8;border-radius:8px;padding:10px}
+.flux-reference h3,.mcell h3{margin:0 0 6px;font-size:12.5px;color:#334155;font-weight:650}
+.flux-reference img{width:100%;display:block;border-radius:6px;background:#fff;
+  cursor:zoom-in;aspect-ratio:1/1;object-fit:contain}
+.prompt-copy .prompt{margin:0 0 8px;font-size:15.5px;font-weight:640;line-height:1.4}
+.prompt-copy .meta{font-size:12.5px;color:var(--muted);margin:0 0 8px}
+.mtable{width:100%;border-collapse:collapse;font-size:12px}
+.mtable th,.mtable td{padding:3px 6px;border:1px solid #dfe4ea;text-align:right;white-space:nowrap}
+.mtable th:first-child,.mtable td:first-child{text-align:left;max-width:190px;
+  overflow:hidden;text-overflow:ellipsis}
+.mtable thead th{background:#eef2f7;font-weight:650;font-size:11.5px;color:#334155}
+.mtable tr.isours td{background:#fff4f2}
+.mtable tr.isref td:first-child{font-weight:750}
+.mtable td.na{color:var(--na)}
+.mtable td.dim{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:9px}
+.mcell{margin:0;background:#fafbfc;border:1px solid #e2e8ef;border-radius:8px;padding:7px}
+.mcell.ours{border-color:#f0bdb7;background:#fff8f7}
+.mcell.ref{border-color:#a9cbe8;background:#f4f9ff}
+.mcell .mhead{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;
+  font-size:12.5px;margin-bottom:5px}
+.mcell .mname{font-weight:650}
+.mcell .sc{font-variant-numeric:tabular-nums;font-size:11.5px;color:#0f766e;
+  background:#e6f4f1;border-radius:99px;padding:1px 7px}
+.mcell .badge{font-size:11px;border-radius:99px;padding:1px 7px;background:#eef2f7;color:#455468}
+.mcell .badge.bad{background:#fee4e2;color:#912018}
+.mcell img{width:100%;display:block;border-radius:6px;background:#fff;cursor:zoom-in;
+  aspect-ratio:1024/544;object-fit:contain}
+.mcell .miss{font-size:12px;color:#912018;padding:14px 4px}
+/* ---------- lightbox ---------- */
+#lightbox{position:fixed;inset:0;background:#0b121999;display:none;
+  align-items:center;justify-content:center;z-index:50;padding:24px}
 #lightbox.on{display:flex}
 #lightbox img{max-width:94vw;max-height:84vh;background:#fff;border-radius:8px}
-#lightbox .cap{position:absolute;bottom:14px;color:#fff;font-size:13px;background:#0009;padding:5px 12px;border-radius:99px}
-@media(max-width:1100px){.layout{grid-template-columns:1fr}aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}}
+#lightbox .cap{position:absolute;bottom:14px;color:#fff;font-size:13px;
+  background:#0009;padding:5px 12px;border-radius:99px}
+#sentinel{height:1px}
+.footer-btn{display:block;width:100%;font:inherit;font-size:14px;padding:12px;
+  border:1px dashed #9fb0c0;border-radius:9px;background:#fff;cursor:pointer;margin-top:8px}
 </style>
 </head>
 <body>
 <header>
-  <h1>Test-set comparison · 10-way aligned gallery</h1>
-  <p>Qualitative comparison on the frozen <b>1522-prompt</b> test set. Every row shows the <b>same sample</b>, the <b>same inference replicate (r0)</b> and the <b>same 8 view indices</b>, so cells align across methods. Rendered images only — no 3D models, no videos. Each method header also carries that prompt's <b>CLIP12 score</b> from the frozen evaluation. <a href="https://qiu-yuchen.github.io/">← qiu-yuchen.github.io</a></p>
-  <a class="navlink" href="scores.html">全部得分结果 · 10 方法全指标汇总 →</a>
+  <h1>TRELLIS Stage-1 · 测试集对照（含 OURS 三个训练 seed）</h1>
+  <p>冻结 <b>1522 条</b>测试提示词的定性对照。每张卡片 = 一条提示词，依次给出<b>原始 FLUX 输入</b>、该样本的指标读数、以及各方法的 8 视角贴合图。同一格里<b>样本编号、推理重复（r0）、视角索引</b>三者完全一致，因此可以逐格横向比较。只放渲染图，不含 3D 模型与视频。 <a href="https://qiu-yuchen.github.io/">← qiu-yuchen.github.io</a></p>
+  <nav>
+    <a class="navlink" href="metrics.html">全指标总表 · 可排序 →</a>
+    <a class="navlink" href="scores.html">CLIP / Uni3D 得分榜</a>
+  </nav>
 </header>
-<div class="layout">
-<aside>
-  <h2>样本 Samples</h2>
-  <input id="q" placeholder="搜索 S 编号 / 提示词 / 原始 ID" autocomplete="off">
-  <select id="split"><option value="">全部划分</option></select>
-  <select id="cat"><option value="">全部分类</option></select>
-  <div style="font-size:12px;color:var(--muted);margin:4px 0 8px"><span id="shown">0</span> 条可选 · 已选 <b id="cur">–</b></div>
-  <ul id="list"></ul>
-</aside>
+
 <main>
-  <div id="loading" class="card">正在载入清单…</div>
-  <div id="app" style="display:none">
-    <section class="card">
-      <div class="head">
-        <div>
-          <h2 id="cid">–</h2>
-          <div class="ids" id="ids"></div>
-        </div>
-        <div style="text-align:right;font-size:12.5px;color:var(--muted)">
-          第 <b id="pos">1</b> / <span id="total">0</span> 条<br>
-          <button id="prev" style="margin-top:6px">← 上一条</button>
-          <button id="next">下一条 →</button>
-        </div>
-      </div>
-      <p class="prompt" id="prompt"></p>
-      <div class="tags" id="tags"></div>
-    </section>
-    <section class="card scboard">
-      <div class="hd">
-        <h3>本 prompt 的 CLIP 得分榜 <span style="font-weight:400;color:var(--muted)">— 10 个方法，同一 prompt、同一评测口径</span></h3>
-        <span class="hint">数值 ×100；<b>Δ</b> = OURS − 该方法（正 = OURS 更好）；★ 为本 prompt 最高分</span>
-      </div>
-      <div id="scoreboard"></div>
-      <div class="hint" id="scorenote" style="margin-top:8px"></div>
-    </section>
-    <div class="ctrl">
-      <span style="font-size:13px;color:var(--muted)">方法筛选</span>
-      <button data-f="all" class="on">全部 10</button>
-      <button data-f="ours">仅 OURS + BASE</button>
-      <button data-f="ext">仅外部基线</button>
-      <label style="margin-left:8px"><input type="checkbox" id="onlyInvalid"> 只看含无效结果的方法</label>
-    </div>
-    <div id="rows"></div>
-    <section class="card note">
-      <b>读数口径：</b>本页是定性对照，不是数值结论。固定参考 <b>OURS-seed2027-step12000</b>，全部方法统一取 <b>replicate 0</b>（seed_000）。每行一张贴合图，含 <b>8 个视角</b>，每格上方已烧入视角号与角度：上排 <code>v00 0° · v01 30° · v03 90° · v04 120°</code>，下排 <code>v06 180° · v07 210° · v09 270° · v10 300°</code>。<br>
-      <b>样本范围：</b>10 个方法在 replicate 0 下均具备完整 12 视角的<b>交集</b>，共 <b>1522</b> 条；不满足的样本不出现在本页，也不用其它样本替代。同一行的样本编号、推理重复与视角索引逐格一致。<br>
-      <b>无效结果：</b>保持原状并逐行标注，不重抽、不填零，无效样本仍占自己的编号。<br>
-      <b>图像规格：</b>源图为 512×512 逐视角渲染；本页每视角下采样到 256×256 后拼成一张 1024×544 的 WebP（为便于公开托管而压缩）。所有数值结论一律基于原始未压缩渲染，不基于本页图像。<br>
-      <b>CLIP 得分：</b>每个方法标题栏给出该 prompt 的 <code>CLIP12 average</code>（每次生成 12 视角取平均 → 两条有效推理重复取平均）与 <code>CLIP12 best-view</code>（12 视角取最大，其余相同），数值 ×100。固定参考 <b>OURS-seed2027-step12000</b>；<b>Δ = OURS − 该方法</b>，正数表示 OURS 在该 prompt 上更高。缺失值显示为 “—”，不填 0、不重抽。完整指标（含 Uni3D、OURS 固定 seed 与 best-of-3 seed 两种口径、分类/划分拆分）见 <a href="scores.html">全部得分结果</a>。<br>
-      <b>Hunyuan 列：</b>标注为 <i>Hunyuan3D-2 (FR40K accelerated)</i>，是明确采用的加速 Paint 配置，不等于原始标准 Paint。OURS 的旧 ULIP 仍处隔离范围，本页不涉及跨方法 ULIP 排名。
-    </section>
+  <div class="note" id="topnote">
+    <b>读数口径（务必先读）</b><br>
+    <b>固定参考：</b>全站数值口径的固定参考仍是 <b>OURS-seed2027-step12000</b>；本页额外把 <b>seed2026 / seed2028</b> 的结果<b>展示出来</b>供对照，但这属于<b>展示层面的放开</b>，<b>不改变</b>既有的「固定单一参考、不择优、不取三 seed 均值」口径。<br>
+    <b>不确定性：</b>三个 seed 的差异本身就是「训练种子敏感性」证据，不是可挑选的自由度。下表的「三 seed 极差」只用来描述敏感程度。<br>
+    <b>三种「没有值」严格区分：</b><span style="color:#5f6b7a">—</span> = 该 prompt 在该方法上没有有效结果（<b>保留在分母</b>，不填 0、不重抽）；<span style="color:#7a5d00">不适用</span> = 协议上未定义（外部基线没有 Teacher 几何；LGM 为高斯表示，点指标不适用）；<span style="color:#7a5d00">隔离</span> = 旧 ULIP 参考受 PointBERT 合批污染，仅供对照，<b>不得</b>用于排名或论文。<br>
+    <b>图像规格：</b>源图为 512×512 逐视角渲染；本页把 8 个视角下采样到 256×256 后拼成 1024×544 的 WebP（为公开托管而压缩）。<b>所有数值结论一律基于原始未压缩渲染</b>，不基于本页图像。<br>
+    <b>有效性来源：</b>卡片里的「有效 / 无效」取自<b>修正后的权威逐条结果</b>，而非早期的冻结记录（后者约七成 OURS 记录带修正前状态，会低报无效样本）。完整指标见 <a href="metrics.html">全指标总表</a>。
   </div>
+
+  <section class="overall">
+    <h2>OURS 三个训练 seed 总览</h2>
+    <p class="sub">每格为该方法的 prompt 级均值（口径与全站一致：每次生成 12 视角取平均 → 两条有效推理重复取平均 → prompt 平均）。<b>Δ</b> 一律是「固定参考 seed2027 − 该 seed」。三 seed 极差 = 三个 seed 均值中的最大值减最小值。</p>
+    <div class="table-scroll"><table id="ovTable"><thead></thead><tbody></tbody></table></div>
+    <p class="sub" id="ovNote" style="margin:10px 0 0"></p>
+  </section>
+
+  <div class="controls" id="controls">
+    <label>搜索 <input id="q" placeholder="S 编号 / 原始 ID / 提示词" autocomplete="off"></label>
+    <label>划分 <select id="fSplit"><option value="">全部</option></select></label>
+    <label>分类 <select id="fCat"><option value="">全部</option></select></label>
+    <label>长度 <select id="fLen"><option value="">全部</option></select></label>
+    <label>复杂度 <select id="fCmp"><option value="">全部</option></select></label>
+    <label>排序指标 <select id="sMetric"></select></label>
+    <label>排序方法 <select id="sMethod"></select></label>
+    <button id="sDir" title="切换最好在前 / 最差在前">最好在前 ↓</button>
+    <label>显示方法 <select id="mPreset">
+      <option value="all">全部 12</option>
+      <option value="ours">OURS 三 seed + BASE + Teacher-II</option>
+      <option value="seeds">仅 OURS 三个 seed</option>
+      <option value="ext">仅 7 个外部基线</option>
+      <option value="custom">自定义…</option>
+    </select></label>
+    <span class="visible-count" id="count">载入中…</span>
+  </div>
+
+  <div id="mPicker" class="panel" style="display:none"></div>
+
+  <div id="loading" class="panel">正在载入清单与指标…</div>
+  <div id="cards"></div>
+  <div id="sentinel"></div>
+  <button id="more" class="footer-btn" style="display:none">载入更多</button>
+
+  <section class="panel" id="readme" style="margin-top:18px">
+    <h2 style="margin:0 0 8px;font-size:16px">读数说明（与全站一致）</h2>
+    <div style="font-size:12.8px;color:#39485a;line-height:1.75">
+      <b>样本范围：</b>10 个方法在 replicate 0 下均具备完整 12 视角的<b>交集</b>，共 <b>1522</b> 条；不满足的样本不出现在本页，也不用其它样本替代。新加入的 seed2026 / seed2028 在原树中 1536 条全部完整，因此<b>没有缩小这个交集</b>。<br>
+      <b>指标定义：</b><code>CLIP12 平均</code> = 每次生成 12 视角取平均 → 两条有效推理重复取平均；<code>CLIP12 最优</code> = 12 视角取最大，其余相同（均 ×100 显示）。<code>ULIP（逐条修正）</code> 用 point batch=1 重算，解除了旧参考的 PointBERT 合批污染，<b>仅 7 个原生分支有值</b>。<code>占用 IoU / Chamfer（原生坐标）</code> 以 <b>TEACHER-IT</b> 为几何参考，只有原生分支有。<code>PSNR / SSIM / LPIPS</code> 也是以 <b>TEACHER-IT 同 rep 同方位角渲染</b>为参考；TEACHER-IT 自己是参考，因此这三项对它没有定义。<br>
+      <b>Hunyuan 列：</b>标注为 <i>Hunyuan3D-2 (FR40K accelerated)</i>，是明确采用的加速 Paint 配置，不等于原始标准 Paint。其 CLIP 属于加速后 Paint，Uni3D 属于简化前原 Shape，均不等于最终 FR 网格几何。<br>
+      <b>本页与数值结论的关系：</b>本页是<b>定性对照</b>，不是数值结论。任何排名请以 <a href="metrics.html">全指标总表</a> 的配对口径为准。
+    </div>
+  </section>
 </main>
-</div>
+
 <div id="lightbox"><img id="lbImg" alt=""><div class="cap" id="lbCap"></div></div>
+
 <script>
 "use strict";
-const MANIFEST="manifest.json",SCORES="scores.json";
-const VIEWS8=[0,1,3,4,6,7,9,10];
-const PX=(v,d=2)=>v==null?"—":(v*100).toFixed(d);
-const SG=(v,d=2)=>v==null?"—":(v>0?"+":"")+(v*100).toFixed(d);
-let M=null,S=null,rows=[],idx=0,filter="all",onlyInvalid=false;
+/* ============================================================================
+   Card-stream gallery: original FLUX input + 3 OURS seeds + BASE + Teacher-II
+   + 7 external baselines, one card per frozen prompt.
+   Validity comes from per_prompt_v2 (authoritative corrected per-result); the
+   legacy manifest.invalid map is pre-correction and is deliberately not used.
+   ========================================================================== */
+const F_MANIFEST="manifest.json", F_PPV2="per_prompt_v2.json", F_METRICS="metrics_v2.json";
+const CHUNK=24, HARD_CAP=600;          // windowed rendering keeps the DOM light
+
+/* metric registry: key, label, direction, group, display scale */
+const METRICS=[
+  ["clip12_average","CLIP12 平均","higher","semantic",100],
+  ["clip12_best","CLIP12 最优","higher","semantic",100],
+  ["uni3d","Uni3D","higher","semantic",1],
+  ["ulip_corrected","ULIP（修正）","higher","semantic",1],
+  ["ss_iou","占用 IoU","higher","teacher_geometry",1],
+  ["ss_f1","占用 F1","higher","teacher_geometry",1],
+  ["ss_native_chamfer","Chamfer（原生）","lower","teacher_geometry",1],
+  ["mesh_chamfer","Mesh Chamfer","lower","teacher_geometry",1],
+  ["silhouette_iou","轮廓 IoU","higher","teacher_geometry",1],
+  ["normal_cosine","法向余弦","higher","teacher_geometry",1],
+  ["depth_error","深度误差","lower","teacher_geometry",1],
+  ["psnr_teacher","PSNR","higher","teacher_image",1],
+  ["ssim_teacher","SSIM","higher","teacher_image",1],
+  ["lpips_teacher","LPIPS","lower","teacher_image",1],
+  ["connected_components","连通分量","lower","shape",1],
+  ["nonmanifold_edges","非流形边","lower","shape",1],
+];
+const MMAP={}; for(const m of METRICS)MMAP[m[0]]={key:m[0],label:m[1],direction:m[2],group:m[3],scale:m[4]};
+/* the six columns shown inside every card's metric table */
+const CARD_METRICS=["clip12_average","ulip_corrected","ss_iou","ss_native_chamfer","psnr_teacher","lpips_teacher"];
+const GROUPNAME={semantic:"语义 / 文本对齐",teacher_geometry:"Teacher 几何（仅原生）",
+  teacher_image:"Teacher 图像",shape:"形状健康度"};
+/* native-only metrics: undefined for every external baseline */
+const NATIVE_ONLY=new Set(METRICS.filter(m=>m[3]==="teacher_geometry"||m[3]==="shape").map(m=>m[0]));
+NATIVE_ONLY.add("ulip_corrected");
+
 const $=id=>document.getElementById(id);
-function imgUrl(method,cid){return `img/${method}/${cid}_r0.webp`}
-function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
-function grp(m){return ["ours","base","teacher"].includes(m)?"cloud_native":"external"}
-function sc(sid,mid){if(!S)return null;const r=S.per_case[sid];return r&&r[mid]?r[mid]:null}
-function refAvg(sid){const r=sc(sid,"ours");return r?r[0]:null}
-function buildList(){
-  const q=$("q").value.trim().toLowerCase(),sp=$("split").value,ct=$("cat").value;
-  rows=M.samples.filter(s=>{
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+let M=null,P=null,MT=null;
+let samples=[],order=[],shown=0,curPreset="all",customHidden=new Set();
+let sMetric="",sMethod="ours",sBest=true;
+const BR={};   // manifest method id -> per_prompt branch index
+
+function fmtMetric(v,key){
+  if(v==null||!isFinite(v))return null;
+  const m=MMAP[key],s=(m&&m.scale)||1,x=v*s,a=Math.abs(x);
+  if(a>=1000)return x.toLocaleString(undefined,{maximumFractionDigits:0});
+  if(a>=100)return x.toFixed(2);
+  if(a>=10)return x.toFixed(3);
+  return x.toFixed(4);
+}
+const isNA=(key,mid)=>mid==="lgm"&&(key==="uni3d"||key==="ulip_corrected");
+
+/* ---------- per-prompt lookups ---------- */
+function cell(sid,key,mid){                    // metric value for a manifest method
+  const j=BR[mid]; if(j==null)return null;
+  const row=P.rows[sid]; if(!row)return null;
+  const arr=row[key]; if(!arr)return null;
+  const v=arr[j]; return (v==null||!isFinite(v))?null:v;
+}
+function cellState(sid,key,mid){                // "v" | "na" | "missing"
+  const j=BR[mid]; if(j==null)return "missing";
+  const arr=(P.rows[sid]||{})[key]; if(!arr)return "missing";
+  const v=arr[j];
+  if(v!=null&&isFinite(v))return "v";
+  /* no value: is it undefined by protocol, or just missing? */
+  const meta=P.branches&&P.branches[mid];
+  if(isNA(key,mid))return "na";
+  if(NATIVE_ONLY.has(key)&&meta&&meta.kind==="external")return "na";
+  if(key==="ulip_corrected"&&meta&&meta.kind==="external")return "na";
+  if(key==="psnr_teacher"||key==="ssim_teacher"||key==="lpips_teacher");
+  return "missing";
+}
+
+/* ---------- overall table ---------- */
+function buildOverall(){
+  const SEEDS=["OURS-seed2026-step12000","OURS-seed2027-step12000","OURS-seed2028-step12000"];
+  const REF="OURS-seed2027-step12000";
+  const agg=(b,k)=>{const a=MT.aggregates[b];return a&&a[k]?a[k].mean:null};
+  const keys=["clip12_average","clip12_best","uni3d","ulip_corrected","ss_iou","ss_f1",
+    "ss_native_chamfer","mesh_chamfer","silhouette_iou","psnr_teacher","ssim_teacher","lpips_teacher"];
+  let head=`<tr><th>指标</th><th>方向</th><th>seed2026</th><th>seed2027<br><span class="dim" style="font-weight:400">（固定参考）</span></th><th>seed2028</th><th>三 seed 极差</th><th>BASE</th><th>Teacher-II</th></tr>`;
+  let body="";
+  for(const k of keys){
+    const m=MMAP[k];
+    const vals=SEEDS.map(b=>agg(b,k));
+    const fin=vals.filter(v=>v!=null&&isFinite(v));
+    const spread=fin.length>=2?Math.max(...fin)-Math.min(...fin):null;
+    /* best among the three seeds, honouring direction */
+    let bi=-1;
+    if(fin.length){
+      let bv=null;
+      vals.forEach((v,i)=>{
+        if(v==null||!isFinite(v))return;
+        const better=bv==null||(m.direction==="lower"?v<bv:v>bv);
+        if(better){bv=v;bi=i}
+      });
+    }
+    const bx=b=>{const v=agg(b,k);
+      return v==null?'<td class="na">—</td>'
+        :`<td class="${fin.length&&(m.direction==="lower"?v===Math.min(...fin):v===Math.max(...fin))?'best':''}">${fmtMetric(v,k)}</td>`};
+    body+=`<tr><td>${esc(m.label)}</td><td class="dir">${m.direction==="lower"?"越低越好":"越高越好"}</td>`
+      +vals.map((v,i)=>{
+         if(v==null||!isFinite(v))return '<td class="na">—</td>';
+         const best=fin.length&&(m.direction==="lower"?v===Math.min(...fin):v===Math.max(...fin));
+         return `<td class="${best?"best":""}">${fmtMetric(v,k)}</td>`;
+       }).join("")
+      +`<td class="dim">${spread==null?"—":fmtMetric(spread,k)}</td>`
+      +bx("BASE")+bx("TEACHER-II")+`</tr>`;
+  }
+  $("ovTable").tHead.innerHTML=head;
+  $("ovTable").tBodies[0].innerHTML=body;
+  $("ovNote").innerHTML=`<b>红色只标「三个 seed 之间」的最优值</b>；BASE / Teacher-II 是并列的参考列，不参与该标注`
+    +`（Teacher-II 本身就是几何参考，所以占用 IoU 恒为 1.000、Chamfer 恒为 0.000，这不是「打败了谁」）。`
+    +`三 seed 极差只描述<b>训练种子敏感度</b>，不是可挑选的自由度。<br>`
+    +`<b>ULIP（修正）</b>目前 BASE 高于三个 seed（${fmtMetric(agg("BASE","ulip_corrected"),"ulip_corrected")} vs `
+    +`${[...SEEDS.map(b=>agg(b,"ulip_corrected"))].map(v=>fmtMetric(v,"ulip_corrected")).join(" / ")}）——`
+    +`这是修正后的真实结果，按原样呈现，不做粉饰。外部基线的 ULIP 仍未修正，故不出现在本表。`;
+}
+
+/* ---------- filters + ordering ---------- */
+function keyOf(v){
+  if(v==null||!isFinite(v))return null;
+  const d=MMAP[sMetric].direction;
+  return d==="closer_to_1"?Math.abs(v-1):v;
+}
+function buildOrder(){
+  const q=$("q").value.trim().toLowerCase(),sp=$("fSplit").value,
+        ct=$("fCat").value,ln=$("fLen").value,cp=$("fCmp").value;
+  order=samples.filter(s=>{
     if(sp&&s.split!==sp)return false;
     if(ct&&s.category!==ct)return false;
-    if(!q)return true;
-    return (s.case_id+" "+s.sample_id+" "+s.prompt).toLowerCase().includes(q);
+    if(ln&&s.length_bucket!==ln)return false;
+    if(cp&&s.complexity!==cp)return false;
+    if(q&&!((s.case_id+" "+s.sample_id+" "+s.prompt).toLowerCase().includes(q)))return false;
+    return true;
   });
-  const ul=$("list");ul.replaceChildren();
-  const frag=document.createDocumentFragment();
-  for(const s of rows){
-    const li=document.createElement("li");
-    li.innerHTML=`<span class="cid">${esc(s.case_id)}</span><span class="pp">${esc(s.prompt)}</span>`;
-    li.addEventListener("click",()=>{idx=rows.indexOf(s);render()});
-    frag.append(li);
+  const m=MMAP[sMetric];
+  if(sMetric&&BR[sMethod]!=null){
+    order=[...order].sort((A,B)=>{
+      const a=keyOf(cell(A.sample_id,sMetric,sMethod)),b=keyOf(cell(B.sample_id,sMetric,sMethod));
+      if(a==null&&b==null)return A.case_id<B.case_id?-1:1;
+      if(a==null)return 1;if(b==null)return -1;
+      const r=(m.direction==="lower"||m.direction==="closer_to_1")?a-b:b-a;
+      return sBest?r:-r;
+    });
+  }else{
+    order=[...order].sort((A,B)=>A.case_id<B.case_id?-1:A.case_id>B.case_id?1:0);
   }
-  ul.append(frag);
-  $("shown").textContent=String(rows.length);
-  if(rows.length&&!rows.includes(rows[idx]))idx=0;
-  paintSel();
+  shown=0; $("cards").replaceChildren();
+  renderChunk();
 }
-function paintSel(){
-  const cur=rows[idx];
-  for(const li of $("list").children){li.classList.toggle("on",!!cur&&li.querySelector(".cid").textContent===cur.case_id)}
-  if(cur){$("cur").textContent=cur.case_id;const on=$("list").querySelector("li.on");if(on)on.scrollIntoView({block:"nearest"})}
-}
-function paintScoreboard(s){
-  const box=$("scoreboard");box.replaceChildren();
-  const ref=refAvg(s.sample_id);
-  const items=M.methods.map(m=>{
-    const r=sc(s.sample_id,m.id);
-    return {m,avg:r?r[0]:null,best:r?r[1]:null};
-  }).filter(x=>x.avg!=null);
-  if(!items.length){box.innerHTML=`<div class="hint">该样本没有可用的 CLIP 分数。</div>`;$("scorenote").textContent="";return}
-  const lo=Math.min(...items.map(x=>x.avg)),hi=Math.max(...items.map(x=>x.avg));
-  const span=Math.max(hi-lo,1e-6);
-  const best=hi;
-  items.sort((a,b)=>b.avg-a.avg);
-  const frag=document.createDocumentFragment();
-  items.forEach((x,i)=>{
-    const d=(ref!=null&&x.m.id!=="ours")?ref-x.avg:null;
-    const w=0.12+0.88*(x.avg-lo)/span;
-    const row=document.createElement("div");
-    row.className="srow"+(x.m.id==="ours"?" me":"");
-    row.innerHTML=`<span class="nm">${esc(x.m.display)}</span>`
-      +`<span class="vv"><b>${PX(x.avg)}</b></span>`
-      +`<span class="bar"><i style="width:${(w*100).toFixed(1)}%"></i></span>`
-      +`<span class="vv">best ${PX(x.best)}</span>`
-      +`<span class="dl${d!=null&&d>1e-9?" up":""}">${d==null?"参考":SG(d)}</span>`
-      +`<span class="rk">${x.avg>=best-1e-12?"★":(i+1)}</span>`;
-    frag.append(row);
+
+/* ---------- method visibility ---------- */
+function visibleMethods(){
+  return M.methods.filter(m=>{
+    if(curPreset==="ours")return ["ours_s2026","ours","ours_s2028","base","teacher"].includes(m.id);
+    if(curPreset==="seeds")return ["ours_s2026","ours","ours_s2028"].includes(m.id);
+    if(curPreset==="ext")return m.group!=="cloud_native";
+    if(curPreset==="custom")return !customHidden.has(m.id);
+    return true;
   });
-  box.append(frag);
-  $("scorenote").textContent="CLIP12 average = 每次生成 12 视角取平均 → 同一 prompt 两条有效推理重复取平均；best = 12 视角取最大，其余相同。缺失一律留空（不填 0、不重抽）。";
 }
-function render(){
-  const s=rows[idx];if(!s)return;
-  $("cid").textContent=s.case_id;
-  $("ids").textContent=`原始 ID ${s.sample_id} · 推理重复 r0（seed_000）`;
-  $("prompt").textContent=s.prompt;
-  $("tags").textContent=`划分 ${s.split} · 分类 ${s.category} (${s.category_name})`;
-  $("pos").textContent=String(idx+1);$("total").textContent=String(rows.length);
-  paintScoreboard(s);
-  const box=$("rows");box.replaceChildren();
+
+/* ---------- card rendering ---------- */
+function cardHTML(s,pos){
+  const sid=s.sample_id;
+  const vis=visibleMethods();
+  let tbl=`<table class="mtable"><thead><tr><th>方法</th>`
+    +CARD_METRICS.map(k=>`<th>${esc(MMAP[k].label)}${MMAP[k].scale>1?" ×100":""}</th>`).join("")
+    +`</tr></thead><tbody>`;
+  for(const meth of vis){
+    const isOurs=meth.id.startsWith("ours");
+    tbl+=`<tr class="${isOurs?"isours":""}${meth.id==="ours"?" isref":""}">`
+      +`<td title="${esc(meth.id)}">${esc(meth.display)}${meth.id==="ours"?' <span style="color:#b42318">•参考</span>':""}</td>`;
+    for(const k of CARD_METRICS){
+      const st=cellState(sid,k,meth.id);
+      if(st==="v")tbl+=`<td>${fmtMetric(cell(sid,k,meth.id),k)}</td>`;
+      else if(st==="na")tbl+=`<td class="na" title="协议上未定义">不适用</td>`;
+      else tbl+=`<td class="dim" title="该 prompt 没有有效结果">—</td>`;
+    }
+    tbl+="</tr>";
+  }
+  tbl+=`</tbody></table>`;
+
+  let grid="";
+  for(const meth of vis){
+    const st=cellState(sid,"clip12_average",meth.id);
+    const cv=cell(sid,"clip12_average",meth.id);
+    grid+=`<figure class="mcell ${meth.id.startsWith("ours")?"ours":""}${meth.id==="ours"?" ref":""}">`
+      +`<div class="mhead"><span class="mname">${esc(meth.display)}</span>`
+      +(st==="v"?`<span class="sc">CLIP ${fmtMetric(cv,"clip12_average")}</span>`
+               :`<span class="badge bad">无有效值</span>`)
+      +`</div><img loading="lazy" decoding="async" src="${esc(meth.path_template.replace("{case}",s.case_id))}"`
+      +` alt="${esc(meth.display)} · ${esc(s.case_id)} · 8 视角" data-cap="${esc(meth.display)} · ${esc(s.case_id)} · 8 views (0/30/90/120/180/210/270/300°)"></figure>`;
+  }
+
+  return `<article class="sample" data-case="${esc(s.case_id)}">`
+    +`<div class="chead"><h2>${esc(s.case_id)} <span class="cid">${esc(sid)}</span></h2>`
+    +`<div class="cmeta">${esc(s.split)} · ${esc(s.category)} ${esc(s.category_name||"")}`
+    +`${s.length_bucket?" · "+esc(s.length_bucket):""}${s.complexity?" · "+esc(s.complexity):""}</div>`
+    +`<div class="cpos">第 ${pos} / ${order.length} 条</div></div>`
+    +`<div class="reference-grid">`
+    +`<div class="flux-reference"><h3>原始 FLUX 输入</h3>`
+    +`<img loading="lazy" decoding="async" src="img/flux_refs/${esc(s.case_id)}_r0.webp"`
+    +` alt="FLUX input for ${esc(s.case_id)}" data-cap="${esc(s.case_id)} · 原始 FLUX 输入"></div>`
+    +`<div class="prompt-copy"><p class="prompt">${esc(s.prompt)}</p>`
+    +`<p class="meta">划分 ${esc(s.split)} · 分类 ${esc(s.category)} · 编号 ${esc(s.case_id)} · 推理重复 r0（seed_000）</p>`
+    +tbl+`</div></div><div class="grid">${grid}</div></article>`;
+}
+
+function renderChunk(){
+  const end=Math.min(shown+CHUNK,order.length);
+  if(end<=shown)return;
+  let buf="";
+  for(let i=shown;i<end;i++)buf+=cardHTML(order[i],i+1);
+  const wrap=document.createElement("div");
+  wrap.innerHTML=buf;
+  const frag=document.createDocumentFragment();
+  while(wrap.firstChild)frag.append(wrap.firstChild);
+  $("cards").append(frag);
+  shown=end;
+  $("count").textContent=`显示 ${shown} / ${order.length} 条（共 ${samples.length} 条）`;
+  $("more").style.display=(shown<order.length&&shown<HARD_CAP)?"block":"none";
+  if(shown>=HARD_CAP&&shown<order.length){
+    $("more").style.display="none";
+    $("count").textContent+=` · 已达单次渲染上限 ${HARD_CAP}，请用筛选或搜索收窄`;
+  }
+}
+
+/* ---------- UI wiring ---------- */
+function syncMethodSelects(){
+  const sm=$("sMethod");sm.replaceChildren();
+  for(const m of M.methods)if(BR[m.id]!=null)sm.append(new Option(m.display,m.id));
+  sm.value=sMethod;
+  const sg=$("sMetric");sg.replaceChildren();
+  sg.append(new Option("（按样本编号）",""));
+  const groups=[...new Set(METRICS.map(m=>m[3]))];
+  for(const g of groups){
+    const og=document.createElement("optgroup");og.label=GROUPNAME[g]||g;
+    for(const m of METRICS.filter(x=>x[3]===g))og.append(new Option(m[1],m[0]));
+    sg.append(og);
+  }
+  sg.value=sMetric;
+}
+function buildPicker(){
+  const box=$("mPicker");box.replaceChildren();
+  const lab=document.createElement("div");
+  lab.style.cssText="font-size:12.5px;color:#5f6b7a;margin-bottom:8px";
+  lab.textContent="勾选要显示的方法（自定义模式）：";
+  box.append(lab);
+  const row=document.createElement("div");
+  row.style.cssText="display:flex;flex-wrap:wrap;gap:10px";
   for(const m of M.methods){
-    if(filter==="ours"&&!["ours","base"].includes(m.id))continue;
-    if(filter==="ext"&&["ours","base","teacher"].includes(m.id))continue;
-    const bad=(M.invalid[m.id]||[]).includes(s.case_id);
-    if(onlyInvalid&&!bad)continue;
-    const r=sc(s.sample_id,m.id),ref=refAvg(s.sample_id);
-    const d=(r&&r[0]!=null&&ref!=null&&m.id!=="ours")?ref-r[0]:null;
-    const row=document.createElement("div");row.className="mrow";
-    const head=document.createElement("div");head.className="mhead";
-    head.innerHTML=`<span class="name">${esc(m.display)}</span>`
-      +(m.id==="ours"?`<span class="badge ours">固定参考</span>`:``)
-      +(grp(m.id)==="external"?`<span class="badge ext">外部基线</span>`:``)
-      +`<span class="badge${bad?" bad":""}">${bad?"无效":"有效"}</span>`
-      +`<span class="sc">CLIP avg <b>${r?PX(r[0]):"—"}</b></span>`
-      +`<span class="sc">best <b>${r?PX(r[1]):"—"}</b></span>`
-      +(d!=null?`<span class="sc${d>1e-9?" win":" lose"}">Δ ${SG(d)}</span>`:``)
-      +`<span class="bid">${esc(m.baseline_id)}</span>`
-      +(bad?`<span class="bid">原因：${esc(((M.invalid_reasons[m.id]||{})[s.case_id]||[]).join(", ")||"—")}</span>`:``);
-    row.append(head);
-    const wrap=document.createElement("div");wrap.className="sheetwrap";
-    const im=document.createElement("img");
-    im.loading="lazy";im.decoding="async";im.width=1024;im.height=544;
-    im.alt=`${m.display} · ${s.case_id} · 8 views`;
-    im.src=imgUrl(m.id,s.case_id);
-    im.addEventListener("error",()=>{wrap.replaceChildren(Object.assign(document.createElement("div"),{className:"note",textContent:"图像缺失："+im.src}))});
-    im.addEventListener("click",()=>{$("lbImg").src=im.src;$("lbCap").textContent=`${m.display} · ${s.case_id} · 8 views (0/30/90/120/180/210/270/300°)`;$("lightbox").classList.add("on")});
-    wrap.append(im);row.append(wrap);
-    box.append(row);
+    const l=document.createElement("label");
+    l.style.cssText="font-size:12.5px;display:inline-flex;gap:5px;align-items:center";
+    const cb=document.createElement("input");cb.type="checkbox";
+    cb.checked=!customHidden.has(m.id);
+    cb.addEventListener("change",()=>{
+      if(cb.checked)customHidden.delete(m.id);else customHidden.add(m.id);
+      curPreset="custom";$("mPreset").value="custom";redraw();
+    });
+    l.append(cb,document.createTextNode(m.display));
+    row.append(l);
   }
-  paintSel();
+  box.append(row);
 }
-document.querySelectorAll(".ctrl button[data-f]").forEach(b=>b.addEventListener("click",()=>{
-  filter=b.dataset.f;document.querySelectorAll(".ctrl button[data-f]").forEach(x=>x.classList.toggle("on",x===b));render();
-}));
-$("onlyInvalid").addEventListener("change",e=>{onlyInvalid=e.target.checked;render()});
-["q","split","cat"].forEach(id=>$(id).addEventListener("input",()=>{buildList();render()}));
-$("prev").addEventListener("click",()=>{if(idx>0){idx--;render()}});
-$("next").addEventListener("click",()=>{if(idx<rows.length-1){idx++;render()}});
-document.addEventListener("keydown",e=>{
-  if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT")return;
-  if(e.key==="ArrowRight")$("next").click();else if(e.key==="ArrowLeft")$("prev").click();
-  else if(e.key==="Escape")$("lightbox").classList.remove("on");
+function redraw(){buildOrder()}
+
+$("q").addEventListener("input",redraw);
+["fSplit","fCat","fLen","fCmp"].forEach(id=>$(id).addEventListener("change",redraw));
+$("sMetric").addEventListener("change",e=>{sMetric=e.target.value;sBest=true;sDirLabel();redraw()});
+$("sMethod").addEventListener("change",e=>{sMethod=e.target.value;sBest=true;sDirLabel();redraw()});
+function sDirLabel(){const m=MMAP[sMetric];
+  if(!m){$("sDir").textContent="按编号排序";$("sDir").disabled=true;return}
+  $("sDir").disabled=false;
+  $("sDir").textContent=(m.direction==="closer_to_1")?(sBest?"最接近 1 在前 ↓":"最远在前 ↑")
+    :(sBest?"最好在前 ↓":"最差在前 ↑")}
+$("sDir").addEventListener("click",()=>{sBest=!sBest;sDirLabel();redraw()});
+$("mPreset").addEventListener("change",e=>{
+  curPreset=e.target.value;
+  $("mPicker").style.display=curPreset==="custom"?"block":"none";
+  redraw();
+});
+$("more").addEventListener("click",renderChunk);
+if("IntersectionObserver" in window){
+  new IntersectionObserver(es=>{if(es[0].isIntersecting&&shown<order.length&&shown<HARD_CAP)renderChunk()},
+    {rootMargin:"800px"}).observe($("sentinel"));
+}
+$("cards").addEventListener("click",e=>{
+  const im=e.target.closest("img");if(!im)return;
+  $("lbImg").src=im.src;$("lbCap").textContent=im.dataset.cap||"";
+  $("lightbox").classList.add("on");
 });
 $("lightbox").addEventListener("click",()=>$("lightbox").classList.remove("on"));
-fetch(MANIFEST,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("HTTP "+r.status);return r.json()}).then(m=>{
-  M=m;
-  return fetch(SCORES,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(sc=>{S=sc;return m});
-}).then(m=>{
-  const sp=new Set(),ct=new Set();
-  for(const s of m.samples){sp.add(s.split);ct.add(s.category)}
-  for(const v of [...sp].sort())$("split").append(new Option(v,v));
-  for(const v of [...ct].sort())$("cat").append(new Option(v,v));
-  $("loading").style.display="none";$("app").style.display="";
-  buildList();render();
-}).catch(e=>{$("loading").textContent="清单载入失败："+e});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("lightbox").classList.remove("on")});
+
+/* ---------- boot ---------- */
+Promise.all([
+  fetch(F_MANIFEST,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("manifest.json HTTP "+r.status);return r.json()}),
+  fetch(F_PPV2,{cache:"no-store"}).then(r=>r.ok?r.json():null),
+  fetch(F_METRICS,{cache:"no-store"}).then(r=>r.ok?r.json():null),
+]).then(([m,pp,mt])=>{
+  M=m;P=pp;MT=mt;
+  if(!pp)throw Error("per_prompt_v2.json 不可用：排序与指标表已停用");
+  /* Map every manifest column onto its per_prompt branch.  The two id spaces are
+     NOT identical for external baselines (manifest `direct25` has baseline_id
+     `DIRECT25_APPLE`, while the per-prompt payload keys it as `direct25`), so the
+     join goes through baseline_id and falls back to the manifest id. */
+  const mtRows=(mt&&mt.methods)||[];
+  const byBase={},byId={};
+  for(const x of mtRows){if(x.baseline_id)byBase[x.baseline_id]=x.id;byId[x.id]=x.id;}
+  M.methods.forEach(meth=>{
+    const branch=byBase[meth.baseline_id]||byId[meth.id]||meth.id;
+    const j=P.methods.indexOf(branch);
+    if(j>=0)BR[meth.id]=j;
+    const info=mtRows.find(x=>x.id===branch);
+    if(info)P.branches={...(P.branches||{}),[meth.id]:info};
+  });
+  /* samples enriched with complexity / length bucket from the per-prompt meta */
+  samples=m.samples.map(s=>Object.assign({},s,P.meta[s.sample_id]||{}));
+  const one=v=>[...new Set(samples.map(s=>s[v]).filter(Boolean))].sort();
+  for(const v of one("split"))$("fSplit").append(new Option(v,v));
+  for(const v of one("category"))$("fCat").append(new Option(v,v));
+  for(const v of one("length_bucket"))$("fLen").append(new Option(v,v));
+  for(const v of one("complexity"))$("fCmp").append(new Option(v,v));
+  if(MT)buildOverall();
+  else $("ovNote").textContent="metrics_v2.json 不可用，总览表已停用。";
+  syncMethodSelects();buildPicker();sDirLabel();
+  $("loading").style.display="none";
+  buildOrder();
+}).catch(e=>{$("loading").textContent="载入失败："+e});
 </script>
 </body></html>
