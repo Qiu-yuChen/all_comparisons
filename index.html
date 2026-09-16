@@ -118,7 +118,7 @@ article.sample{padding:12px 14px}
     <b>读数口径（务必先读）</b><br>
     <b>固定参考：</b>全站数值口径的固定参考仍是 <b>OURS-seed2027-step12000</b>；本页额外把 <b>seed2026 / seed2028</b> 的结果<b>展示出来</b>供对照，但这属于<b>展示层面的放开</b>，<b>不改变</b>既有的「固定单一参考、不择优、不取三 seed 均值」口径。<br>
     <b>不确定性：</b>三个 seed 的差异本身就是「训练种子敏感性」证据，不是可挑选的自由度。下表的「三 seed 极差」只用来描述敏感程度。<br>
-    <b>三种「没有值」严格区分：</b><span style="color:#5f6b7a">—</span> = 该 prompt 在该方法上没有有效结果（<b>保留在分母</b>，不填 0、不重抽）；<span style="color:#7a5d00">不适用</span> = 协议上未定义（外部基线没有 Teacher 几何；LGM 为高斯表示，点指标不适用）；<span style="color:#7a5d00">隔离</span> = 旧 ULIP 参考受 PointBERT 合批污染，仅供对照，<b>不得</b>用于排名或论文。<br>
+    <b>三种「没有值」严格区分：</b><span style="color:#5f6b7a">—</span> = 该 prompt 在该方法上没有有效结果（<b>保留在分母</b>，不填 0、不重抽）；<span style="color:#7a5d00">不适用</span> = 协议上未定义（外部基线没有 Teacher 几何；LGM 为高斯表示，点指标不适用）；<span style="color:#7a5d00">隔离</span> = 旧 <code>ulip_frozen</code>（仅 7 个原生分支的冻结 batch=8 值）受 PointBERT 合批污染，仅供对照，<b>不得</b>用于排名或论文；可引用的是同列的 <b>ULIP（逐条）</b>。<br>
     <b>图像规格：</b>源图为 512×512 逐视角渲染；本页把 8 个视角下采样到 256×256 后拼成 1024×544 的 WebP（为公开托管而压缩）。<b>所有数值结论一律基于原始未压缩渲染</b>，不基于本页图像。<br>
     <b>有效性来源：</b>卡片里的「有效 / 无效」取自<b>修正后的权威逐条结果</b>，而非早期的冻结记录（后者约七成 OURS 记录带修正前状态，会低报无效样本）。完整指标见 <a href="metrics.html">全指标总表</a>。
   </div>
@@ -185,7 +185,7 @@ const METRICS=[
   ["clip12_average","CLIP12 平均","higher","semantic",100],
   ["clip12_best","CLIP12 最优","higher","semantic",100],
   ["uni3d","Uni3D","higher","semantic",1],
-  ["ulip_corrected","ULIP（修正）","higher","semantic",1],
+  ["ulip_corrected","ULIP（逐条）","higher","semantic",1],
   ["ss_iou","占用 IoU","higher","teacher_geometry",1],
   ["ss_f1","占用 F1","higher","teacher_geometry",1],
   ["ss_native_chamfer","Chamfer（原生）","lower","teacher_geometry",1],
@@ -206,7 +206,8 @@ const GROUPNAME={semantic:"语义 / 文本对齐",teacher_geometry:"Teacher 几�
   teacher_image:"Teacher 图像",shape:"形状健康度"};
 /* native-only metrics: undefined for every external baseline */
 const NATIVE_ONLY=new Set(METRICS.filter(m=>m[3]==="teacher_geometry"||m[3]==="shape").map(m=>m[0]));
-NATIVE_ONLY.add("ulip_corrected");
+/* NB: ulip_corrected is NOT native-only — the external evaluator already scores ULIP at
+   point batch = 1 with the same normalisation, so it is directly comparable. */
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -242,7 +243,6 @@ function cellState(sid,key,mid){                // "v" | "na" | "missing"
   const meta=P.branches&&P.branches[mid];
   if(isNA(key,mid))return "na";
   if(NATIVE_ONLY.has(key)&&meta&&meta.kind==="external")return "na";
-  if(key==="ulip_corrected"&&meta&&meta.kind==="external")return "na";
   if(key==="psnr_teacher"||key==="ssim_teacher"||key==="lpips_teacher");
   return "missing";
 }
@@ -288,9 +288,10 @@ function buildOverall(){
   $("ovNote").innerHTML=`<b>红色只标「三个 seed 之间」的最优值</b>；BASE / Teacher-II 是并列的参考列，不参与该标注`
     +`（Teacher-II 本身就是几何参考，所以占用 IoU 恒为 1.000、Chamfer 恒为 0.000，这不是「打败了谁」）。`
     +`三 seed 极差只描述<b>训练种子敏感度</b>，不是可挑选的自由度。<br>`
-    +`<b>ULIP（修正）</b>目前 BASE 高于三个 seed（${fmtMetric(agg("BASE","ulip_corrected"),"ulip_corrected")} vs `
-    +`${[...SEEDS.map(b=>agg(b,"ulip_corrected"))].map(v=>fmtMetric(v,"ulip_corrected")).join(" / ")}）——`
-    +`这是修正后的真实结果，按原样呈现，不做粉饰。外部基线的 ULIP 仍未修正，故不出现在本表。`;
+    +`<b>ULIP（逐条 batch=1）</b>目前已把外部基线一并纳入同协议比较：BASE 高于三个 seed（${fmtMetric(agg("BASE","ulip_corrected"),"ulip_corrected")} vs `
+    +`${[...SEEDS.map(b=>agg(b,"ulip_corrected"))].map(v=>fmtMetric(v,"ulip_corrected")).join(" / ")}），`
+    +`Hunyuan3D-2 是本表最高（${fmtMetric(agg("hunyuan_fr40k","ulip_corrected"),"ulip_corrected")}）——`
+    +`这是真实结果，按原样呈现，不做粉饰。旧列 <code>ulip_frozen</code> 是原生分支的合批污染存档，已整列隔离、不参与排名。`;
 }
 
 /* ---------- filters + ordering ---------- */

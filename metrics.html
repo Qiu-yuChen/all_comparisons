@@ -73,7 +73,7 @@ th.hl{background:#e6fffa;color:#0f766e}
 <body>
 <header>
   <h1>Metrics board · 全指标总表</h1>
-  <p>十个方法在冻结测试集上的<b>全部指标</b>：CLIP12 / Uni3D、<b>逐条修正的 ULIP</b>、以 <b>Teacher-IT</b> 为参考的几何指标（占用 IoU / F1 / Precision / Recall、各对齐档位的 Chamfer、轮廓 IoU、法向余弦、深度误差）与图像指标（<b>PSNR / SSIM / LPIPS</b>）。<b>每一列表头都可点击排序</b>。所有数值读自已归档的评测产物，未重算任何指标、未重跑推理。 <a href="https://qiu-yuchen.github.io/">← qiu-yuchen.github.io</a></p>
+  <p>十四个方法在冻结测试集上的<b>全部指标</b>：CLIP12 / Uni3D、<b>逐条（point batch=1）的 ULIP</b>——原生与外部同协议、可横向比较——以 <b>Teacher-IT</b> 为参考的几何指标（占用 IoU / F1 / Precision / Recall、各对齐档位的 Chamfer、轮廓 IoU、法向余弦、深度误差）与图像指标（<b>PSNR / SSIM / LPIPS</b>）。<b>每一列表头都可点击排序</b>。所有数值读自已归档的评测产物，未重算任何指标、未重跑推理。 <a href="https://qiu-yuchen.github.io/">← qiu-yuchen.github.io</a></p>
   <a class="navlink" href="index.html">← 10 方法对齐图库</a>
   <a class="navlink" href="scores.html">CLIP / Uni3D 得分榜</a>
 </header>
@@ -189,8 +189,6 @@ function mgroupOf(m){return m.kind==="external"?"external":"native"}
 function cellStatus(metricKey,method){
   const m=MAP[metricKey];
   const native=m.scope==="native";
-  if(metricKey==="ulip_corrected"&&method.kind==="external")
-    return {text:"未修正",cls:"na",title:"外部基线的 ULIP 仍处隔离（quarantine）：冻结管线用 point batch=8，PointBERT 特征被合批污染；本次只对 7 个原生分支做了逐条修正"};
   if(m.group==="teacher_image"&&method.id==="TEACHER-IT")
     return {text:"参考",cls:"na",title:"Teacher-IT 本身就是参考渲染，PSNR/SSIM/LPIPS 对它没有定义（自比恒为 SSIM 1、LPIPS 0）"};
   if(native&&method.kind==="external")return {text:"不适用",cls:"na",title:"外部基线没有 Teacher 几何参考，该指标未采集"};
@@ -246,7 +244,7 @@ function buildRank(){
   }
   t.innerHTML=html+"</tbody>";
   const n=present.length;
-  $("rkLegend").innerHTML=`<b>${esc(m.label)}</b> · ${DIRNAME[m.direction]||m.direction}${rkKey==="ulip_frozen"?' · <span style="color:#b45309">隔离指标：点云合批污染，仅作对照，不得用于排名或论文</span>':""}`
+  $("rkLegend").innerHTML=`<b>${esc(m.label)}</b> · ${DIRNAME[m.direction]||m.direction}${rkKey==="ulip_frozen"?' · <span style="color:#b45309">隔离指标：仅 7 个原生分支的冻结 batch=8 值，点云合批污染，仅作对照，不得用于排名或论文；可引用的是 ULIP（逐条 batch=1）</span>':""}`
     +`；参与排序 ${n} / ${list.length} 个方法（无有效值者排在最后并显示为 <span class="dim">—</span> 或 <span class="na">不适用</span>）。`
     +`末列条形按 ${n} 个有效值的极差归一，<span class="bar" style="width:34px"></span> 为固定参考 OURS-seed2027-step12000 的位置（${fmt(refv,m)}）。`
     +`<br>Δ = <b>OURS − 方法</b>，在双方共同有效的 prompt 上配对计算；胜/负/平按 Δ 符号统计。`;
@@ -511,8 +509,9 @@ Promise.all([
   const pv=M.provenance||{};
   $("provNote").innerHTML=`
   <b>本页只做只读聚合：未重算任何已归档指标、未重跑推理、未改动分母。</b><br><br>
-  <b>ULIP（逐条修正）</b>：<code>${esc(pv.native_ulip_corrected||"")}</code><br>
-  旧列 <code>ulip_frozen</code> 用点云 <b>batch=8</b> 前向，PointBERT 特征被合批污染（点云支最大绝对差 0.2094，文本支 3.2e-7），因此一直处于隔离状态。修正版只把<b>一次前向的点云数改成 1</b>，采样器（sha256 定种）、质心与单位最大半径归一化、文本编码器、权重文件（sha256 <code>c4833a0b…59627</code>）与冻结管线完全一致；对独立审计的 6 条固定样本最大复现误差 6.4e-7。<br><br>
+  <b>ULIP（逐条 batch=1）</b>：<code>${esc(pv.native_ulip_corrected||"")}</code><br>
+  原生分支取自该逐条重算；<b>外部基线的 ULIP 本来就是这个协议</b>——外部评测器 <code>metric_runtime.py</code> 用 <code>xyz = point_bundle["ulip_xyz_8192"].unsqueeze(0)</code>，即<b>每次前向只喂 1 个点云</b>，且强制要求点云已按「质心居中 + 单位最大半径」归一化（不满足直接 RefusalError）。两边同为 8192 点、同一权重（sha256 <code>c4833a0b…59627</code>）、同一文本来源 <code>student_prompt</code>，因此<b>原生与外部现在同列同协议，可横向比较</b>。<br>
+  旧列 <code>ulip_frozen</code> 只剩 7 个原生分支的冻结 <b>batch=8</b> 值：产出它的那套环境里 PointBERT 的点云分支对合批敏感（点云支最大绝对差 0.2094，文本支 3.2e-7），把每个原生分支整体压低约 0.06 并使符号翻转，所以整列隔离、不参与排名。同一批点云在 H100 环境上用 batch=1 与 batch=8 前向结果逐位相同，说明污染来自当时的算子实现而非合批本身。逐条重算对独立审计的 6 条固定样本最大复现误差 6.4e-7。<br><br>
   <b>Teacher 几何</b>：<code>${esc(pv.teacher_geometry||"")}</code><br>
   参考分支是 <b>TEACHER-IT</b>。Chamfer 分四个对齐档位：原生坐标、仅对齐平移、对齐平移+尺度、对齐旋转；<code>mesh_chamfer</code> 是表面 10000 点的网格 Chamfer。<b>只有 7 个原生分支有这一组指标</b>，外部基线没有 Teacher 几何，显示 <span class="na">不适用</span>，不填 0。<br><br>
   <b>Teacher 图像（PSNR / SSIM / LPIPS）</b>：<code>${esc(pv.teacher_image||"")}</code><br>
